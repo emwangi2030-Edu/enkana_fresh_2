@@ -8,6 +8,7 @@ import Home from "@/pages/home";
 import Orders from "@/pages/orders";
 import Login from "@/pages/login";
 import CustomerDetails from "@/pages/customer-details";
+import CustomerNew from "@/pages/customer-new";
 import Customers from "@/pages/customers";
 import Payments from "@/pages/payments";
 import Reports from "@/pages/reports";
@@ -15,7 +16,6 @@ import EnkanaMarginTracker from "@/pages/enkana-margin-tracker";
 import RequisitionReport from "@/pages/requisition-report";
 import DeliveryDispatch from "@/pages/delivery-dispatch";
 import ProductsCatalogue from "@/pages/products-catalogue";
-import CustomersDuplicates from "@/pages/customers-duplicates";
 import DashboardLayout from "@/components/dashboard-layout";
 
 function DashboardPages() {
@@ -27,12 +27,14 @@ function DashboardPages() {
         <Route path="/orders/requisition" component={RequisitionReport} />
         <Route path="/orders/dispatch" component={DeliveryDispatch} />
         <Route path="/customers" component={Customers} />
-        <Route path="/customers/duplicates" component={CustomersDuplicates} />
+        <Route path="/customers/new" component={CustomerNew} />
+        <Route path="/customers/duplicates">{() => <Redirect to="/customers" />}</Route>
         <Route path="/customers/:id" component={CustomerDetails} />
         <Route path="/payments" component={Payments} />
         <Route path="/products" component={ProductsCatalogue} />
         <Route path="/reports" component={Reports} />
         <Route path="/reports/enkana-margin-tracker" component={EnkanaMarginTracker} />
+        <Route path="/reports/product-mix" component={Reports} />
         <Route component={NotFound} />
       </Switch>
     </DashboardLayout>

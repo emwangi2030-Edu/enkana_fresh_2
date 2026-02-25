@@ -28,6 +28,11 @@ type MenuItem = {
 
 const menuItems: MenuItem[] = [
   {
+    label: "Dashboard",
+    href: "/",
+    icon: <Home className="h-4 w-4" />,
+  },
+  {
     label: "Orders",
     href: "/orders",
     icon: <ShoppingBag className="h-4 w-4" />,
@@ -35,22 +40,12 @@ const menuItems: MenuItem[] = [
       { label: "All Orders", href: "/orders" },
       { label: "Requisition Report", href: "/orders/requisition" },
       { label: "Delivery Dispatch", href: "/orders/dispatch" },
-      { label: "Customers", href: "/customers" },
     ],
-  },
-  {
-    label: "Margin Tracker",
-    href: "/reports/enkana-margin-tracker",
-    icon: <FileBarChart className="h-4 w-4" />,
   },
   {
     label: "Customers",
     href: "/customers",
     icon: <Users className="h-4 w-4" />,
-    children: [
-      { label: "Customer List", href: "/customers" },
-      { label: "Review Duplicates", href: "/customers/duplicates" },
-    ],
   },
   {
     label: "Payments",
@@ -58,23 +53,25 @@ const menuItems: MenuItem[] = [
     icon: <CreditCard className="h-4 w-4" />,
   },
   {
-    label: "Products",
-    href: "/products",
-    icon: <Package className="h-4 w-4" />,
-  },
-  {
     label: "Reports",
     href: "/reports",
     icon: <FileBarChart className="h-4 w-4" />,
     children: [
-      { label: "Monthly Report", href: "/reports" },
       { label: "Margin Tracker", href: "/reports/enkana-margin-tracker" },
+      { label: "Monthly Report", href: "/reports" },
+      { label: "Product Mix", href: "/reports/product-mix" },
     ],
+  },
+  {
+    label: "Products & Pricing",
+    href: "/products",
+    icon: <Package className="h-4 w-4" />,
   },
 ];
 
 function isActive(currentPath: string, href: string): boolean {
   const path = currentPath.replace(/^\/dashboard/, "") || "/";
+  if (href === "/") return path === "/" || path === "";
   if (href === "/orders") {
     return path === "/orders" || path === "/" || path.startsWith("/orders/");
   }
@@ -93,7 +90,7 @@ function isChildActive(currentPath: string, childHref: string): boolean {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({ Orders: true, Customers: true, Reports: true });
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({ Orders: true, Reports: true });
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {

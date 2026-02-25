@@ -48,7 +48,7 @@ export async function fetchCustomersPaginated(opts: {
   if (search && search.trim()) {
     const term = search.trim().replace(/[%_\\]/g, "\\$&");
     query = query.or(
-      `name.ilike.%${term}%,phone.ilike.%${term}%,location.ilike.%${term}%`
+      `name.ilike.%${term}%,phone.ilike.%${term}%,location.ilike.%${term}%,delivery_zone.ilike.%${term}%,notes.ilike.%${term}%`
     );
   }
 
