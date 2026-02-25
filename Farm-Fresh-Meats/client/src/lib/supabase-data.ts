@@ -28,6 +28,36 @@ export async function fetchCustomers(): Promise<Customer[]> {
   return (data || []).map((r) => toCamelCase(r) as Customer);
 }
 
+export type CustomersPage = { customers: Customer[]; total: number };
+
+export async function fetchCustomersPaginated(opts: {
+  page: number;
+  limit: number;
+  search?: string;
+}): Promise<CustomersPage> {
+  const { page, limit, search } = opts;
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  let query = supabase
+    .from("customers")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (search && search.trim()) {
+    const term = search.trim().replace(/[%_\\]/g, "\\$&");
+    query = query.or(
+      `name.ilike.%${term}%,phone.ilike.%${term}%,location.ilike.%${term}%`
+    );
+  }
+
+  const { data, error, count } = await query;
+  if (error) throw new Error(error.message);
+  const customers = (data || []).map((r) => toCamelCase(r) as Customer);
+  return { customers, total: count ?? 0 };
+}
+
 export async function createCustomer(customer: InsertCustomer): Promise<Customer> {
   const snakeData = toSnakeCase(customer as Record<string, any>);
   const { data, error } = await supabase
