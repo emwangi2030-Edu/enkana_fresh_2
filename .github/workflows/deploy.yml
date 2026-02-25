@@ -26,8 +26,14 @@ jobs:
           cache-dependency-path: Farm-Fresh-Meats/package-lock.json
 
       - name: Install and build Farm-Fresh-Meats
+        env:
+          NODE_ENV: production
+          # Placeholders so Vite build succeeds; real values come from .env on cPanel
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder-anon-key
         run: |
           cd Farm-Fresh-Meats
+          node -v && npm -v
           npm ci
           npm run build
 
