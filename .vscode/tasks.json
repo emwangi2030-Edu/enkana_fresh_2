@@ -94,6 +94,15 @@
       "problemMatcher": [],
       "group": { "kind": "build", "isDefault": true },
       "runOptions": { "runOn": "folderOpen" }
+    },
+    {
+      "label": "Deploy to live (merge dev → main, push)",
+      "type": "shell",
+      "command": "git checkout main && git pull origin main && git merge dev -m 'Merge dev: deploy from Cursor' && git push origin main",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "group": "none"
     }
   ]
 }
