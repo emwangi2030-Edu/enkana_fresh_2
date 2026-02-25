@@ -79,6 +79,7 @@ export const insertOrderSchema = z.object({
   totalAmount: z.number().nullable().optional(),
   status: z.string().optional(),
   paymentStatus: z.string().optional(),
+  paidAt: z.string().nullable().optional(),
   mpesaTransactionId: z.string().nullable().optional(),
   mpesaCheckoutRequestId: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),

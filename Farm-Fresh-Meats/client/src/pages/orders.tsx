@@ -40,7 +40,7 @@ import {
   Plus, Pencil, Trash2, Phone, Package, Search, Calendar,
   UserPlus, UserCheck, MapPin, DollarSign, Users, TrendingUp,
   ShoppingBag, CreditCard, Loader2, CheckCircle2, ChevronDown, ChevronRight,
-  RefreshCw, Percent, CalendarClock
+  RefreshCw, Percent, CalendarClock, Banknote
 } from "lucide-react";
 import { PRODUCTS, type Order, type InsertOrder, type OrderItem, type Customer } from "@shared/schema";
 
@@ -220,6 +220,18 @@ export default function Orders() {
     },
     onSettled: () => {
       setStkPushingOrderId(null);
+    },
+  });
+
+  const markPaidMutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      return updateOrder(orderId, {
+        paymentStatus: "paid",
+        paidAt: new Date().toISOString(),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
   });
 
@@ -824,17 +836,31 @@ export default function Orders() {
 
                       <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-200">
                         {order.paymentStatus !== "paid" && order.totalAmount && order.totalAmount > 0 && order.status !== "cancelled" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
-                            onClick={(e) => { e.stopPropagation(); stkPushMutation.mutate(order.id); }}
-                            disabled={stkPushingOrderId === order.id}
-                            data-testid={`button-request-payment-${order.id}`}
-                          >
-                            {stkPushingOrderId === order.id ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CreditCard className="h-3.5 w-3.5 mr-1" />}
-                            {stkPushingOrderId === order.id ? "Sending..." : "Request Payment"}
-                          </Button>
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                              onClick={(e) => { e.stopPropagation(); stkPushMutation.mutate(order.id); }}
+                              disabled={stkPushingOrderId === order.id}
+                              data-testid={`button-request-payment-${order.id}`}
+                            >
+                              {stkPushingOrderId === order.id ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CreditCard className="h-3.5 w-3.5 mr-1" />}
+                              {stkPushingOrderId === order.id ? "Sending..." : "Request Payment"}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                              onClick={(e) => { e.stopPropagation(); markPaidMutation.mutate(order.id); }}
+                              disabled={markPaidMutation.isPending}
+                              title="Mark as paid (cash, bank transfer, etc.)"
+                              data-testid={`button-mark-paid-${order.id}`}
+                            >
+                              {markPaidMutation.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Banknote className="h-3.5 w-3.5 mr-1" />}
+                              Mark as Paid
+                            </Button>
+                          </>
                         )}
                         <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); openEdit(order); }} data-testid={`button-edit-${order.id}`}>
                           <Pencil className="h-3.5 w-3.5 mr-1" />
