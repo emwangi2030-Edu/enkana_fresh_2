@@ -2,6 +2,25 @@
 
 When you **push to GitHub**, your live site on cPanel can update automatically. This guide uses cPanel’s **Git Version Control** and a **cron job** to pull from GitHub and deploy on a schedule (e.g. every 5 minutes).
 
+**Full pipeline:** For the end-to-end flow from **dev → main → GitHub → live site**, see **docs/DEPLOYMENT-FLOW.md**.
+
+---
+
+## Dev vs main: changes only go live from main
+
+- **Development** is done on the `dev` branch (you commit and push to `dev`).
+- **The live cPanel site** only deploys from the **`main`** branch (cPanel cron runs `git pull origin main`).
+- So for any change to appear on the live site you must **merge `dev` into `main` and push `main`**:
+
+  ```bash
+  git checkout main
+  git pull origin main
+  git merge dev -m "Merge dev: <short description>"
+  git push origin main
+  ```
+
+- After that, either wait for the cPanel cron (e.g. 5 min) or in cPanel run **Update from Remote** then **Deploy HEAD Commit**. The live site will then serve what’s on `main`.
+
 ---
 
 ## Overview
@@ -108,7 +127,7 @@ So that every push to GitHub is deployed without you opening cPanel each time, r
 1. In cPanel go to **Advanced** → **Cron Jobs**.
 2. **Add New Cron Job.**
 3. **Schedule:** e.g. **Every 5 minutes** (or “Every 15 minutes” if you prefer).
-4. **Command:** use the **exact Repository Path** from Git Version Control (Manage). The cron must (1) pull from GitHub and (2) run the deploy. Replace `REPO_PATH` with that path (e.g. `/home/enkanafresh/repos/enkana_fresh_2`).
+4. **Command:** use the **exact Repository Path** from Git Version Control (Manage). The cron must (1) pull from GitHub and (2) run the deploy. Replace `REPO_PATH` with that path. The path is shown in cPanel when you click **Manage** (e.g. `/home/enkanafresh/repositories/enkana_fresh_2` or `/home/enkanafresh/repos/enkana_fresh_2` — hosts vary between `repos` and `repositories`).
 
    **Standard cPanel (one line):**
    ```bash
@@ -149,6 +168,24 @@ If you prefer **manual** deploy:
 
 ---
 
+## Changes pushed but not showing on the live site
+
+If you’ve pushed to **main** (e.g. Reports, Revenue tracker, Mark as Paid, Customers pagination) and the live site still shows the old version after 5+ minutes:
+
+1. **Deploy manually once** (so we’re not relying on cron):
+   - cPanel → **Files** → **Git Version Control**.
+   - Open your repo (e.g. `enkana_fresh_2`) → **Manage**.
+   - Go to the **Pull or Deploy** tab.
+   - Click **Update from Remote** (pulls latest `main` from GitHub).
+   - Click **Deploy HEAD Commit** (runs `.cpanel.yml`: copies files and builds Farm-Fresh-Meats).
+2. **Check the deploy result**: If deploy shows an error (e.g. `npm run build` failed), fix that (Node version in cPanel, env vars, or see build logs).
+3. **Restart the Node app**: If you use **Setup Node.js App**, open it and click **Restart** so the app serves the new build.
+4. **Hard refresh the browser**: Ctrl+Shift+R (or Cmd+Shift+R on Mac) or try an incognito window so you’re not seeing a cached old bundle.
+
+If **Update from Remote** fails, the deploy key or repo URL may be wrong. If **Deploy HEAD Commit** fails, read the error (often `npm ci` / `npm run build`); ensure Node.js is set up in cPanel and the repo path is correct.
+
+---
+
 ## Troubleshooting
 
 - **Clone fails / Permission denied**  
@@ -162,3 +199,9 @@ If you prefer **manual** deploy:
 
 - **.cpanel.yml not found**  
   Ensure `.cpanel.yml` is in the **root** of the repo (same level as `index.html`) and that you’ve committed and pushed it.
+
+- **Deploy ran but changes still not visible on the live site**
+  1. **Confirm you're on the app URL** — The Node app (Orders, Customers, Reports, Revenue tracker) is served by the **Node.js application** in cPanel, not by the static files in `public_html`. If your app is on a subdomain (e.g. `app.enkanafresh.com` or `orders.enkanafresh.com`), open that URL. The main domain might only show the static marketing site.
+  2. **Check that the build ran** — After **Deploy HEAD Commit**, look for any error message. If `npm ci` or `npm run build` failed, `Farm-Fresh-Meats/dist/` won't be updated. In cPanel File Manager, go to `repositories/enkana_fresh_2/Farm-Fresh-Meats/dist/public/` and check that files there have **today's date**. If the folder is missing or old, the build failed.
+  3. **Restart the Node.js application** — cPanel → **Setup Node.js App** → your application → **Restart**. The running process may need a restart to serve from the new `dist/` or to clear any in-memory state.
+  4. **Confirm in the browser** — When the app loads, a green bar at the top should show **"App version: 2026-02-25-c9df984"** for a few seconds. If you don't see that bar, you may be on the static site or an old build; try a hard refresh (Ctrl+Shift+R) or an incognito window.

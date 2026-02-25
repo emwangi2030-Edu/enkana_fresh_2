@@ -28,7 +28,7 @@ So: **push = automatic**. No manual pull or deploy in cPanel.
 
 1. cPanel → **Files** → **Git Version Control**.
 2. Click **Manage** next to **enkana_fresh_2**.
-3. Copy the **Repository Path** (e.g. `/home/enkanafresh/repos/enkana_fresh_2`).  
+3. Copy the **Repository Path** (e.g. `/home/enkanafresh/repositories/enkana_fresh_2` or `.../repos/enkana_fresh_2` — use the path cPanel shows).  
    You’ll use this exact path in the cron below.
 
 ### 3. Add one cron job (pull + deploy)
@@ -65,14 +65,23 @@ cd /home/enkanafresh/repos/enkana_fresh_2 && /usr/local/cpanel/3rdparty/bin/git 
 
 ## Your daily workflow
 
-1. Edit code on your Mac.
-2. Commit and push:
+1. Edit code on your Mac on the **`dev`** branch.
+2. Commit and push to dev:
    ```bash
    git add .
    git commit -m "Your message"
+   git push origin dev
+   ```
+3. When you want the live site to update, merge **dev** into **main** and push main:
+   ```bash
+   git checkout main
+   git pull origin main
+   git merge dev -m "Merge dev: your change"
    git push origin main
    ```
-3. Do nothing in cPanel. Within about 5 minutes (or your cron interval), the live site will update.
+4. Do nothing in cPanel. Within about 5 minutes (or your cron interval), the live site will update. Restart the Node.js app in cPanel after the first deploy if the site doesn’t refresh.
+
+For the full flow (dev → main → GitHub → live site), see **docs/DEPLOYMENT-FLOW.md**.
 
 ---
 
