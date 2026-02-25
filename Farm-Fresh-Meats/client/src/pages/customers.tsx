@@ -22,6 +22,10 @@ import {
   CheckCheck,
   ChevronDown,
   ChevronUp,
+  DollarSign,
+  Percent,
+  AlertTriangle,
+  UserX,
 } from "lucide-react";
 import { useState, useCallback, useMemo } from "react";
 import type { Customer, Order } from "@shared/schema";
@@ -335,98 +339,129 @@ export default function Customers() {
     setPage(1);
   }, []);
 
-  const metricCardClass = "rounded-lg overflow-hidden border border-[#1a3a2a]/20 bg-[#f5f0e8] shadow-sm";
-  const metricHeaderClass = "px-3 py-1.5 text-xs font-semibold text-white bg-[#1a3a2a]";
-  const metricValueClass = "text-2xl font-bold text-[#e9a82a]";
+  const metricCardBase = "overflow-hidden border-0 rounded-xl bg-card shadow-sm transition cursor-pointer h-full hover:ring-2 hover:ring-primary/20";
+  const metricCardActive = "ring-2 ring-primary/30";
 
   return (
-    <div className="p-6 max-w-6xl mx-auto enkana-section-green min-h-full">
-      {/* ZONE 1 — Customer metrics dashboard */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
-        <Card className={metricCardClass}>
-          <div className={metricHeaderClass}>Total Customers</div>
-          <div className="p-3">
-            <div className={metricValueClass}>{metrics.totalCustomers}</div>
-            <p className="text-xs text-muted-foreground mt-0.5">all time</p>
-          </div>
-        </Card>
-        <Card
-          className={`${metricCardClass} ${listFilter?.type === "repeat" ? "ring-2 ring-[#e9a82a]" : ""} cursor-pointer hover:opacity-90 transition`}
-          onClick={() => {
-            setListFilter((f) => (f?.type === "repeat" ? null : { type: "repeat" }));
-            setPage(1);
-          }}
-        >
-          <div className={metricHeaderClass}>Repeat Customer %</div>
-          <div className="p-3">
-            <div className={metricValueClass}>{metrics.repeatPct}%</div>
-            <p className="text-xs text-muted-foreground mt-0.5">placed 2 or more orders</p>
-          </div>
-        </Card>
-        <Card
-          className={`${metricCardClass} cursor-pointer hover:opacity-90 transition`}
-          onClick={() => {
-            setSortBy("totalSpent");
-            setSortDir("desc");
-            setListFilter(null);
-            setPage(1);
-          }}
-        >
-          <div className={metricHeaderClass}>Average Lifetime Value</div>
-          <div className="p-3">
-            <div className={metricValueClass}>KES {Math.round(metrics.avgLifetime).toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground mt-0.5">per customer, all time</p>
-          </div>
-        </Card>
-        <Card
-          className={`${metricCardClass} ${listFilter?.type === "health" && listFilter.health === "at_risk" ? "ring-2 ring-[#e9a82a]" : ""} cursor-pointer hover:opacity-90 transition`}
-          onClick={() => {
-            setListFilter((f) => (f?.type === "health" && f.health === "at_risk" ? null : { type: "health", health: "at_risk" }));
-            setPage(1);
-          }}
-        >
-          <div className={metricHeaderClass}>At Risk</div>
-          <div className="p-3">
-            <div className="text-2xl font-bold text-amber-600">{metrics.atRiskCount}</div>
-            <p className="text-xs text-muted-foreground mt-0.5">haven&apos;t ordered in 31–60 days</p>
-          </div>
-        </Card>
-        <Card
-          className={`${metricCardClass} ${listFilter?.type === "health" && listFilter.health === "lapsed" ? "ring-2 ring-red-500" : ""} cursor-pointer hover:opacity-90 transition`}
-          onClick={() => {
-            setListFilter((f) => (f?.type === "health" && f.health === "lapsed" ? null : { type: "health", health: "lapsed" }));
-            setPage(1);
-          }}
-        >
-          <div className={metricHeaderClass}>Lapsed</div>
-          <div className="p-3">
-            <div className="text-2xl font-bold text-red-600">{metrics.lapsedCount}</div>
-            <p className="text-xs text-muted-foreground mt-0.5">no order in 60+ days</p>
-          </div>
-        </Card>
-        <Card
-          className={`${metricCardClass} ${listFilter?.type === "zone" && listFilter.zone === metrics.topZone ? "ring-2 ring-[#e9a82a]" : ""} cursor-pointer hover:opacity-90 transition`}
-          onClick={() => {
-            if (metrics.topZone === "—") return;
-            setListFilter((f) => (f?.type === "zone" && f.zone === metrics.topZone ? null : { type: "zone", zone: metrics.topZone }));
-            setPage(1);
-          }}
-        >
-          <div className={metricHeaderClass}>Top Delivery Zone</div>
-          <div className="p-3">
-            <div className={metricValueClass}>{metrics.topZone}</div>
-            <p className="text-xs text-muted-foreground mt-0.5">by number of orders</p>
-          </div>
-        </Card>
-      </div>
+    <div className="p-6 max-w-5xl mx-auto min-h-full bg-background">
+      {/* ZONE 1 — Customer metrics dashboard (Orders-style cards) */}
+      <section className="mb-6" aria-label="Customer metrics">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+          <Card className={metricCardBase}>
+            <div className="flex items-center gap-4 p-4">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Customers</div>
+                <div className="text-xl font-bold text-foreground">{metrics.totalCustomers}</div>
+                <div className="text-[10px] text-muted-foreground">all time</div>
+              </div>
+            </div>
+          </Card>
+          <Card
+            className={`${metricCardBase} ${listFilter?.type === "repeat" ? metricCardActive : ""}`}
+            onClick={() => {
+              setListFilter((f) => (f?.type === "repeat" ? null : { type: "repeat" }));
+              setPage(1);
+            }}
+          >
+            <div className="flex items-center gap-4 p-4">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600">
+                <Percent className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Repeat Customer %</div>
+                <div className="text-xl font-bold text-foreground">{metrics.repeatPct}%</div>
+                <div className="text-[10px] text-muted-foreground">placed 2+ orders</div>
+              </div>
+            </div>
+          </Card>
+          <Card
+            className={metricCardBase}
+            onClick={() => {
+              setSortBy("totalSpent");
+              setSortDir("desc");
+              setListFilter(null);
+              setPage(1);
+            }}
+          >
+            <div className="flex items-center gap-4 p-4">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                <DollarSign className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Avg Lifetime Value</div>
+                <div className="text-xl font-bold text-foreground">KES {Math.round(metrics.avgLifetime).toLocaleString()}</div>
+                <div className="text-[10px] text-muted-foreground">per customer</div>
+              </div>
+            </div>
+          </Card>
+          <Card
+            className={`${metricCardBase} ${listFilter?.type === "health" && listFilter.health === "at_risk" ? metricCardActive : ""}`}
+            onClick={() => {
+              setListFilter((f) => (f?.type === "health" && f.health === "at_risk" ? null : { type: "health", health: "at_risk" }));
+              setPage(1);
+            }}
+          >
+            <div className="flex items-center gap-4 p-4">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-600">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">At Risk</div>
+                <div className="text-xl font-bold text-foreground">{metrics.atRiskCount}</div>
+                <div className="text-[10px] text-muted-foreground">31–60 days</div>
+              </div>
+            </div>
+          </Card>
+          <Card
+            className={`${metricCardBase} ${listFilter?.type === "health" && listFilter.health === "lapsed" ? metricCardActive : ""}`}
+            onClick={() => {
+              setListFilter((f) => (f?.type === "health" && f.health === "lapsed" ? null : { type: "health", health: "lapsed" }));
+              setPage(1);
+            }}
+          >
+            <div className="flex items-center gap-4 p-4">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-red-50 text-red-600">
+                <UserX className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Lapsed</div>
+                <div className="text-xl font-bold text-foreground">{metrics.lapsedCount}</div>
+                <div className="text-[10px] text-muted-foreground">60+ days</div>
+              </div>
+            </div>
+          </Card>
+          <Card
+            className={`${metricCardBase} ${listFilter?.type === "zone" && listFilter.zone === metrics.topZone ? metricCardActive : ""}`}
+            onClick={() => {
+              if (metrics.topZone === "—") return;
+              setListFilter((f) => (f?.type === "zone" && f.zone === metrics.topZone ? null : { type: "zone", zone: metrics.topZone }));
+              setPage(1);
+            }}
+          >
+            <div className="flex items-center gap-4 p-4">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                <MapPin className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Top Zone</div>
+                <div className="text-lg font-bold text-foreground truncate" title={metrics.topZone}>{metrics.topZone}</div>
+                <div className="text-[10px] text-muted-foreground">by orders</div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </section>
 
       {/* ZONE 2 — List controls + table/cards */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-display tracking-tight text-foreground" data-testid="text-page-title">
+          <h1 className="text-2xl font-display font-bold tracking-tight text-foreground" data-testid="text-page-title">
             Customers
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1" data-testid="text-customers-subtitle">
             {total === 0
               ? "No customers"
               : total <= pageSize && !search
@@ -459,13 +494,13 @@ export default function Customers() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               data-testid="input-search-customers"
-              className="pl-10 border-border bg-card shadow-sm"
+              className="pl-10 border-border bg-white shadow-sm"
               placeholder="Search name, phone, zone, notes..."
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
             />
           </div>
-          <Button asChild className="shrink-0">
+          <Button asChild className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
             <Link href="/customers/new">
               <UserPlus className="h-4 w-4 mr-2" />
               New Customer
@@ -476,7 +511,7 @@ export default function Customers() {
 
       {/* Duplicate detection banner */}
       {duplicatePairs.length > 0 && (
-        <Card className="mb-6 border-amber-200 bg-amber-50 text-amber-900">
+        <Card className="mb-6 rounded-xl border border-amber-200 bg-amber-50 shadow-sm text-amber-900">
           <div className="p-4">
             <p className="font-medium">
               {duplicatePairs.length} possible duplicate customer{duplicatePairs.length !== 1 ? "s" : ""} detected (same name + delivery zone).
@@ -528,8 +563,8 @@ export default function Customers() {
       {isLoading ? (
         <div className="py-20 text-center text-muted-foreground">Loading customers...</div>
       ) : total === 0 ? (
-        <Card className="enkana-card border border-border shadow-sm py-16 text-center ring-soft">
-          <Users className="mx-auto h-12 w-12 text-primary/30" />
+        <Card className="py-16 text-center border-0 rounded-xl bg-card shadow-sm">
+          <Users className="mx-auto h-12 w-12 text-muted-foreground/50" />
           <div className="mt-4 text-lg font-semibold text-foreground" data-testid="text-empty">
             {search ? "No matching customers" : "No customers yet"}
           </div>
@@ -643,7 +678,7 @@ export default function Customers() {
           )}
 
           {viewMode === "table" ? (
-            <Card className="enkana-card border border-border overflow-hidden ring-soft">
+            <Card className="border-0 rounded-xl bg-card shadow-sm overflow-hidden" data-testid="customers-table">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -707,7 +742,7 @@ export default function Customers() {
                         key={customer.id}
                         role="button"
                         tabIndex={0}
-                        className="border-b border-border last:border-0 enkana-card-hover cursor-pointer hover:bg-muted/30"
+                        className="border-b border-border last:border-0 cursor-pointer hover:bg-muted/30 transition"
                         onClick={() => setLocation(`/customers/${customer.id}`)}
                         onKeyDown={(e) => e.key === "Enter" && setLocation(`/customers/${customer.id}`)}
                       >
@@ -815,7 +850,7 @@ export default function Customers() {
                 href={`/customers/${customer.id}`}
                 data-testid={`card-customer-${customer.id}`}
               >
-                <Card className="enkana-card enkana-card-hover border border-border shadow-sm p-4 transition cursor-pointer h-full ring-soft">
+                <Card className="border-0 rounded-xl bg-card shadow-sm p-4 transition cursor-pointer h-full hover:ring-2 hover:ring-primary/20">
                   <div className="flex items-start gap-3">
                     <div className="relative">
                       <div className="enkana-icon-box grid h-10 w-10 shrink-0 place-items-center rounded-full text-primary">
