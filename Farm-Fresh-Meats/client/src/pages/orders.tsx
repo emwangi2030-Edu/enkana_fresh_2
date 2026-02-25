@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchOrders, fetchCustomers, createCustomer, createOrder, updateOrder, deleteOrder,
@@ -42,7 +42,7 @@ import {
   ShoppingBag, CreditCard, Loader2, CheckCircle2, ChevronDown, ChevronRight,
   RefreshCw, Percent, CalendarClock, Banknote
 } from "lucide-react";
-import { PRODUCTS, type Order, type InsertOrder, type OrderItem, type Customer } from "@shared/schema";
+import { PRODUCTS, getActivePrice, type Order, type InsertOrder, type OrderItem, type Customer } from "@shared/schema";
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -89,10 +89,10 @@ function summarizeItems(items: OrderItem[]): string {
 
 type ProductSelection = Record<string, { selected: boolean; qty: number; price: number }>;
 
-function emptyItemSelection(): ProductSelection {
+function emptyItemSelection(customerLockedMode: "promo" | "standard" | null = null): ProductSelection {
   const sel: ProductSelection = {};
   PRODUCTS.forEach((p) => {
-    sel[p.id] = { selected: false, qty: 1, price: p.pricePerUnit };
+    sel[p.id] = { selected: false, qty: 1, price: getActivePrice(p, customerLockedMode) };
   });
   return sel;
 }
@@ -155,6 +155,20 @@ export default function Orders() {
     queryKey: ["customers"],
     queryFn: fetchCustomers,
   });
+  const selectedCustomer = selectedCustomerId ? customersList.find((c) => c.id === selectedCustomerId) : null;
+
+  // When selected customer changes, update product selection prices to their locked price mode (§3.2)
+  useEffect(() => {
+    const mode = selectedCustomer?.lockedPriceMode ?? null;
+    setProductSelection((prev) => {
+      const next: ProductSelection = {};
+      PRODUCTS.forEach((p) => {
+        const s = prev[p.id];
+        next[p.id] = s ? { ...s, price: getActivePrice(p, mode) } : { selected: false, qty: 1, price: getActivePrice(p, mode) };
+      });
+      return next;
+    });
+  }, [selectedCustomerId, selectedCustomer?.lockedPriceMode]);
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertOrder & { _saveCustomer?: boolean; _customerLocation?: string; _customerLocationPin?: string }) => {
@@ -485,7 +499,7 @@ export default function Orders() {
                         <Checkbox checked={sel?.selected || false} onCheckedChange={() => toggleProduct(product.id)} data-testid={`checkbox-${product.id}`} />
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-sm">{product.name}</div>
-                          <div className="text-xs text-gray-500">Default: KES {product.pricePerUnit.toLocaleString()} per {product.unit}</div>
+                          <div className="text-xs text-gray-500">Default: KES {getActivePrice(product, selectedCustomer?.lockedPriceMode ?? null).toLocaleString()} per {product.unit}</div>
                         </div>
                         {sel?.selected && (
                           <div className="flex flex-col gap-1.5">
@@ -799,7 +813,7 @@ export default function Orders() {
                             <div className="space-y-1.5">
                               {orderItems.map((item) => {
                                 const defaultProduct = PRODUCTS.find((p) => p.id === item.productId);
-                                const isCustomPrice = defaultProduct && item.pricePerUnit !== defaultProduct.pricePerUnit;
+                                const isCustomPrice = defaultProduct && item.pricePerUnit !== getActivePrice(defaultProduct, null);
                                 return (
                                   <div key={item.productId} className="flex items-center justify-between text-sm" data-testid={`text-item-${order.id}-${item.productId}`}>
                                     <div>

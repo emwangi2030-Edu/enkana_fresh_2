@@ -13,6 +13,7 @@ import {
   Menu,
   X,
   FileBarChart,
+  Package,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -32,13 +33,34 @@ const menuItems: MenuItem[] = [
     icon: <ShoppingBag className="h-4 w-4" />,
     children: [
       { label: "All Orders", href: "/orders" },
+      { label: "Requisition Report", href: "/orders/requisition" },
+      { label: "Delivery Dispatch", href: "/orders/dispatch" },
       { label: "Customers", href: "/customers" },
+    ],
+  },
+  {
+    label: "Margin Tracker",
+    href: "/reports/enkana-margin-tracker",
+    icon: <FileBarChart className="h-4 w-4" />,
+  },
+  {
+    label: "Customers",
+    href: "/customers",
+    icon: <Users className="h-4 w-4" />,
+    children: [
+      { label: "Customer List", href: "/customers" },
+      { label: "Review Duplicates", href: "/customers/duplicates" },
     ],
   },
   {
     label: "Payments",
     href: "/payments",
     icon: <CreditCard className="h-4 w-4" />,
+  },
+  {
+    label: "Products",
+    href: "/products",
+    icon: <Package className="h-4 w-4" />,
   },
   {
     label: "Reports",
@@ -54,29 +76,24 @@ const menuItems: MenuItem[] = [
 function isActive(currentPath: string, href: string): boolean {
   const path = currentPath.replace(/^\/dashboard/, "") || "/";
   if (href === "/orders") {
-    return path === "/orders" || path === "/" || path.startsWith("/customers/");
-  }
-  return path.startsWith(href);
-}
-
-function isChildActive(currentPath: string, href: string): boolean {
-  const path = currentPath.replace(/^\/dashboard/, "") || "/";
-  if (href === "/orders") {
-    return path === "/orders" || path === "/";
+    return path === "/orders" || path === "/" || path.startsWith("/orders/");
   }
   if (href === "/customers") {
     return path === "/customers" || path.startsWith("/customers/");
   }
-  if (href === "/reports") {
-    return path === "/reports" || path.startsWith("/reports/");
-  }
-  return path === href;
+  return path.startsWith(href);
+}
+
+function isChildActive(currentPath: string, childHref: string): boolean {
+  const path = currentPath.replace(/^\/dashboard/, "") || "/";
+  if (path === "/" && childHref === "/orders") return true;
+  return path === childHref;
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({ Orders: true, Reports: true });
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({ Orders: true, Customers: true, Reports: true });
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {

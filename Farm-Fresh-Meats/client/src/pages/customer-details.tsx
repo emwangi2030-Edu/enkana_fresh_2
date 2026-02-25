@@ -25,7 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ArrowLeft, Phone, Calendar, Package, User, MapPin, Pencil, Trash2 } from "lucide-react";
-import { PRODUCTS, type Order, type OrderItem, type Customer } from "@shared/schema";
+import { PRODUCTS, getActivePrice, type Order, type OrderItem, type Customer } from "@shared/schema";
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -365,7 +365,7 @@ export default function CustomerDetails() {
                     <div className="mt-2 space-y-1">
                       {orderItems.map((item) => {
                         const defaultProduct = PRODUCTS.find((p) => p.id === item.productId);
-                        const isCustomPrice = defaultProduct && item.pricePerUnit !== defaultProduct.pricePerUnit;
+                        const isCustomPrice = defaultProduct && item.pricePerUnit !== getActivePrice(defaultProduct, null);
                         return (
                           <div
                             key={item.productId}

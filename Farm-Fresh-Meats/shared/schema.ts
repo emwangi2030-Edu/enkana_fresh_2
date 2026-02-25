@@ -22,6 +22,10 @@ export interface Customer {
   phone: string;
   location: string | null;
   locationPin: string | null;
+  deliveryZone?: string | null;
+  lockedPriceMode?: "promo" | "standard" | null;
+  notes?: string | null;
+  tags?: string[] | null;
   createdAt: string;
 }
 
@@ -30,18 +34,72 @@ export const insertCustomerSchema = z.object({
   phone: z.string().min(1),
   location: z.string().nullable().optional(),
   locationPin: z.string().nullable().optional(),
+  deliveryZone: z.string().nullable().optional(),
+  lockedPriceMode: z.enum(["promo", "standard"]).nullable().optional(),
+  notes: z.string().nullable().optional(),
+  tags: z.array(z.string()).nullable().optional(),
 });
 
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
 
-export const PRODUCTS = [
-  { id: "beef", name: "Beef Meat", unit: "kg", pricePerUnit: 750 },
-  { id: "goat", name: "Goat Meat", unit: "kg", pricePerUnit: 800 },
-  { id: "mutton", name: "Mutton", unit: "kg", pricePerUnit: 850 },
-  { id: "chicken", name: "Kienyeji Chicken", unit: "whole", pricePerUnit: 1200 },
-] as const;
+// §2 Product catalogue: promo/standard prices, chicken sizes, sourcing
+export type SourcingType = "slaughter" | "resale" | "chicken";
+export type AnimalType = "goat" | "sheep" | "beef" | "chicken_small" | "chicken_medium" | "chicken_large" | null;
+
+export interface ProductCatalogueItem {
+  id: string;
+  name: string;
+  unit: string;
+  promoPrice: number;
+  standardPrice: number;
+  costPrice: number | null;
+  sourcingType: SourcingType;
+  animalType: AnimalType;
+}
+
+export const PRODUCT_CATALOGUE: ProductCatalogueItem[] = [
+  { id: "goat", name: "Goat Meat", unit: "kg", promoPrice: 750, standardPrice: 800, costPrice: null, sourcingType: "slaughter", animalType: "goat" },
+  { id: "mutton", name: "Mutton", unit: "kg", promoPrice: 750, standardPrice: 800, costPrice: null, sourcingType: "slaughter", animalType: "sheep" },
+  { id: "beef", name: "Beef", unit: "kg", promoPrice: 800, standardPrice: 800, costPrice: 650, sourcingType: "resale", animalType: "beef" },
+  { id: "chicken_small", name: "Chicken — Small", unit: "whole bird", promoPrice: 1000, standardPrice: 1000, costPrice: 500, sourcingType: "chicken", animalType: "chicken_small" },
+  { id: "chicken_medium", name: "Chicken — Medium", unit: "whole bird", promoPrice: 1500, standardPrice: 1500, costPrice: 800, sourcingType: "chicken", animalType: "chicken_medium" },
+  { id: "chicken_large", name: "Chicken — Large", unit: "whole bird", promoPrice: 2000, standardPrice: 2000, costPrice: 1300, sourcingType: "chicken", animalType: "chicken_large" },
+];
+
+// Global pricing mode: switches active sell price across the app (§2)
+export type PricingMode = "promo" | "standard";
+export let PRICING_MODE: PricingMode = "promo";
+
+export function setPricingMode(mode: PricingMode): void {
+  PRICING_MODE = mode;
+}
+
+export function getProductPrice(item: ProductCatalogueItem, mode: PricingMode): number {
+  return mode === "promo" ? item.promoPrice : item.standardPrice;
+}
+
+// Flattened product list: all catalogue items with both prices; use getProductPrice(item, mode) for active price
+export const PRODUCTS: ReadonlyArray<{
+  id: string;
+  name: string;
+  unit: string;
+  promoPrice: number;
+  standardPrice: number;
+}> = PRODUCT_CATALOGUE.map((p) => ({
+  id: p.id,
+  name: p.name,
+  unit: p.unit,
+  promoPrice: p.promoPrice,
+  standardPrice: p.standardPrice,
+}));
 
 export type Product = (typeof PRODUCTS)[number];
+
+/** Resolve price for display/order: use customer's locked mode or global PRICING_MODE */
+export function getActivePrice(product: Product, customerLockedMode: PricingMode | null): number {
+  const mode = customerLockedMode ?? PRICING_MODE;
+  return mode === "promo" ? product.promoPrice : product.standardPrice;
+}
 
 export const orderItemSchema = z.object({
   productId: z.string(),
