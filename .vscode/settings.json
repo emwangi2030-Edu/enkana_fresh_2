@@ -1,0 +1,15 @@
+{
+  "task.allowAutomaticTasks": "on",
+  "window.zoomLevel": -1,
+  "simpleBrowser.focusLockIndicator.enabled": true,
+  "livePreview.autoRefreshPreview": "onSave",
+  "liveServer.settings.port": 8888,
+  "liveServer.settings.root": "/",
+  "terminal.integrated.defaultProfile.osx": "zsh (login)",
+  "terminal.integrated.profiles.osx": {
+    "zsh (login)": {
+      "path": "zsh",
+      "args": ["-l"]
+    }
+  }
+}

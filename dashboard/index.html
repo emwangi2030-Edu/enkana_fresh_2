@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="refresh" content="30" id="meta-refresh" />
+    <title>Dashboard — Enkana Fresh Admin</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;1,9..40,400&family=Fraunces:opsz,wght@9..144,600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "DM Sans", sans-serif;
+        background: #0f172a;
+        color: #f8fafc;
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        background: rgba(30, 41, 59, 0.5);
+      }
+      .logo { font-family: "Fraunces", serif; font-size: 1.25rem; font-weight: 600; }
+      .nav a {
+        color: #94a3b8;
+        text-decoration: none;
+        font-size: 0.875rem;
+      }
+      .nav a:hover { color: #e2e8f0; }
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+      }
+      h1 {
+        font-family: "Fraunces", serif;
+        font-size: 1.75rem;
+        margin: 0 0 1rem 0;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+      .card {
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 12px;
+        padding: 1.25rem;
+      }
+      .card h2 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem 0;
+        color: #e2e8f0;
+      }
+      .card p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: #94a3b8;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <span class="logo">Enkana Fresh Admin</span>
+      <nav class="nav">
+        <a href="/login/">Log out</a>
+      </nav>
+    </header>
+    <main>
+      <h1>Dashboard</h1>
+      <p style="color: #94a3b8;">Welcome to the admin area.</p>
+      <div class="cards">
+        <div class="card">
+          <h2>Orders</h2>
+          <p>View and manage orders</p>
+        </div>
+        <div class="card">
+          <h2>Products</h2>
+          <p>Meat categories & pricing</p>
+        </div>
+        <div class="card">
+          <h2>Customers</h2>
+          <p>Contacts & delivery info</p>
+        </div>
+        <div class="card">
+          <h2>Settings</h2>
+          <p>Site & account settings</p>
+        </div>
+      </div>
+    </main>
+    <script>
+      (function () {
+        var params = new URLSearchParams(location.search);
+        var sec = parseInt(params.get("refresh"), 10);
+        if (sec > 0) {
+          var meta = document.getElementById("meta-refresh");
+          if (meta) meta.setAttribute("content", String(sec));
+        }
+      })();
+    </script>
+  </body>
+</html>

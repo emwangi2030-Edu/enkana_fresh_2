@@ -1,0 +1,17 @@
+# cPanel deployment: static site + build Farm-Fresh-Meats app
+# Requires: Node.js enabled in cPanel (Setup Node.js App or system Node in PATH)
+# Cron: pull from GitHub then run "Deploy HEAD" (or VersionControlDeployment)
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/enkanafresh/public_html/
+    # Static site (marketing, login, dashboard placeholder)
+    - /bin/cp index.html $DEPLOYPATH
+    - /bin/cp .htaccess $DEPLOYPATH
+    - /bin/cp robots.txt $DEPLOYPATH
+    - /bin/cp sitemap.xml $DEPLOYPATH
+    - /bin/cp -R assets $DEPLOYPATH
+    - /bin/cp -R login $DEPLOYPATH
+    - /bin/cp -R dashboard $DEPLOYPATH
+    # Build Farm-Fresh-Meats (React + Node app) so Node app serves latest client
+    - cd Farm-Fresh-Meats && npm ci && npm run build

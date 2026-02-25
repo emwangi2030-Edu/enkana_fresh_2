@@ -1,0 +1,99 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Preview site (Python server)",
+      "type": "shell",
+      "command": "python3 serve.py",
+      "args": [],
+      "options": { "cwd": "${workspaceFolder}", "env": {} },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "silent", "panel": "dedicated" },
+      "runOptions": { "instanceLimit": 1 }
+    },
+    {
+      "label": "Run Farm-Fresh-Meats (full app)",
+      "type": "shell",
+      "command": "/Users/mac/.cursor/scripts/with-node.sh npm run dev",
+      "options": { "cwd": "${workspaceFolder}", "env": { "ROOT": "Farm-Fresh-Meats" } },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "runOptions": { "instanceLimit": 1 }
+    },
+    {
+      "label": "Start Farm-Fresh-Meats (production)",
+      "type": "shell",
+      "command": "npm run build && npm start",
+      "options": { "cwd": "${workspaceFolder}/Farm-Fresh-Meats" },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "runOptions": { "instanceLimit": 1 }
+    },
+    {
+      "label": "Start Farm-Fresh-Meats (dev)",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": { "cwd": "${workspaceFolder}/Farm-Fresh-Meats" },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "runOptions": { "instanceLimit": 1 }
+    },
+    {
+      "label": "Open Farm-Fresh-Meats in Simple Browser",
+      "type": "shell",
+      "command": "echo ${input:openSimpleBrowser}",
+      "problemMatcher": [],
+      "presentation": { "reveal": "never" },
+      "inputs": [
+        {
+          "id": "openSimpleBrowser",
+          "type": "command",
+          "command": "simpleBrowser.api.open",
+          "args": ["http://127.0.0.1:5001?autorefresh=15&_b=5", {"viewColumn": 2}]
+        }
+      ]
+    },
+    {
+      "label": "Run Farm-Fresh-Meats in Simple Browser",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Start Farm-Fresh-Meats (production)",
+        "Open Farm-Fresh-Meats in Simple Browser"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Farm-Fresh-Meats (dev) in Simple Browser",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Start Farm-Fresh-Meats (dev)",
+        "Open Farm-Fresh-Meats in Simple Browser"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Open Farm-Fresh-Meats in system browser",
+      "type": "shell",
+      "command": "sleep 4 && open \"http://127.0.0.1:5001?autorefresh=15\"",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "never" }
+    },
+    {
+      "label": "Run Farm-Fresh-Meats (build, serve, open all)",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Start Farm-Fresh-Meats (production)",
+        "Open Farm-Fresh-Meats in Simple Browser",
+        "Open Farm-Fresh-Meats in system browser"
+      ],
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true },
+      "runOptions": { "runOn": "folderOpen" }
+    }
+  ]
+}
