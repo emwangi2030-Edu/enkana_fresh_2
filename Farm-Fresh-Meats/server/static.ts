@@ -15,6 +15,7 @@ export function serveStatic(app: Express) {
       setHeaders: (res) => {
         res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
       },
     })
   );
@@ -23,6 +24,7 @@ export function serveStatic(app: Express) {
   app.use("/{*path}", (_req, res) => {
     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }

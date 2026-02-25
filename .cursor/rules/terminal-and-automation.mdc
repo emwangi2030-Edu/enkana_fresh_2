@@ -1,0 +1,29 @@
+---
+description: Use Cursor for everything; run tasks and npm via global script so all commands work from here.
+globs: 
+alwaysApply: true
+---
+
+# Use Cursor for everything
+
+This workspace is set up so the user does all development from Cursor (tasks, terminal, agent). See **.vscode/CURSOR-FOR-EVERYTHING.md** for the user-facing guide.
+
+## Node/npm commands
+- **Always** run npm/node via the **global** script so it works in agent-run terminals and in tasks:
+  - **`/Users/mac/.cursor/scripts/with-node.sh`**
+- Examples (from repo root):
+  - Install deps in Farm-Fresh-Meats:  
+    `ROOT="Farm-Fresh-Meats" /Users/mac/.cursor/scripts/with-node.sh npm install`
+  - Run Farm-Fresh-Meats:  
+    `ROOT="Farm-Fresh-Meats" /Users/mac/.cursor/scripts/with-node.sh npm run dev`
+- Tasks **Run Farm-Fresh-Meats (full app)** and **Preview site (Python server)** are in .vscode/tasks.json; prefer running via **Run Task** so the user stays in Cursor.
+
+## Repo layout
+- **Repo root**: static site (index.html, assets), serve.py, login/, dashboard/, deploy/, docs/.
+- **Farm-Fresh-Meats/**: full Replit app (client + server + Supabase). Run with `npm run dev` (via with-node.sh) on port 5000.
+
+## Python
+- Local preview server: `python3 serve.py` (port 8888). No wrapper needed.
+
+## Git
+- Use from repo root. SSH is configured for GitHub; cPanel deploy is via cron + .cpanel.yml.
