@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { Order, InsertOrder, Customer, InsertCustomer, Payment, PaymentException } from "@shared/schema";
+import type { Order, InsertOrder, Customer, InsertCustomer, Payment, PaymentException, ProductCatalogueItem, InsertProductCatalogueItem } from "@shared/schema";
 
 function toCamelCase(obj: Record<string, any>): Record<string, any> {
   const result: Record<string, any> = {};
@@ -84,6 +84,49 @@ export async function updateCustomer(id: string, updates: Partial<InsertCustomer
 export async function deleteCustomer(id: string): Promise<boolean> {
   const { data, error } = await supabase
     .from("customers")
+    .delete()
+    .eq("id", id)
+    .select("id");
+  if (error) throw new Error(error.message);
+  return (data || []).length > 0;
+}
+
+// Products (editable catalogue)
+export async function fetchProducts(): Promise<ProductCatalogueItem[]> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .order("name", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data || []).map((r) => toCamelCase(r) as ProductCatalogueItem);
+}
+
+export async function createProduct(product: InsertProductCatalogueItem): Promise<ProductCatalogueItem> {
+  const snakeData = toSnakeCase(product as Record<string, any>);
+  const { data, error } = await supabase
+    .from("products")
+    .insert(snakeData)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return toCamelCase(data) as ProductCatalogueItem;
+}
+
+export async function updateProduct(id: string, updates: Partial<InsertProductCatalogueItem>): Promise<ProductCatalogueItem> {
+  const snakeData = toSnakeCase(updates as Record<string, any>);
+  const { data, error } = await supabase
+    .from("products")
+    .update(snakeData)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return toCamelCase(data) as ProductCatalogueItem;
+}
+
+export async function deleteProduct(id: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("products")
     .delete()
     .eq("id", id)
     .select("id");

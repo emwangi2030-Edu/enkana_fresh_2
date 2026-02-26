@@ -6,27 +6,50 @@ import { initiateSTKPush, parseCallback, querySTKPushStatus, type StkCallbackBod
 import { supabase } from "../lib/supabase";
 
 function getAdminEmail(): string {
-  const username = process.env.ADMIN_USERNAME ?? "admin";
-  return process.env.ADMIN_EMAIL ?? (username.includes("@") ? username : `${username}@enkanafresh.com`);
+  return process.env.ADMIN_EMAIL ?? "admin@enkanafresh.com";
 }
 
+const SUPER_ADMIN_ROLE = "super_admin";
+const ADMIN_ROLE = "admin";
+
+/** Super admin and admin can invite users and edit roles. Bootstrap user gets super_admin. */
+function canManageUsers(role: string | undefined): boolean {
+  return role === SUPER_ADMIN_ROLE || role === ADMIN_ROLE;
+}
+
+// Only touches Supabase Auth (auth.users). Does not read or write orders, customers, payments, or any app data.
 async function ensureAdminUserExists(): Promise<void> {
   const email = getAdminEmail();
   const password = process.env.ADMIN_PASSWORD;
   if (!password) return;
 
-  const { error } = await supabase.auth.admin.createUser({
+  const { data: createData, error: createError } = await supabase.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
+    app_metadata: { role: SUPER_ADMIN_ROLE },
   });
 
-  if (error) {
-    if (error.message?.includes("already been registered") || error.message?.includes("already exists")) {
-      return;
-    }
-    console.warn("[auth] Could not ensure admin user:", error.message);
+  if (!createError) {
+    return;
   }
+
+  if (
+    createError.message?.includes("already been registered") ||
+    createError.message?.includes("already exists")
+  ) {
+    const { data: list } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+    const existing = list?.users?.find((u) => u.email === email);
+    const currentRole = existing?.app_metadata?.role as string | undefined;
+    // Ensure the bootstrap account (this email) always has super_admin
+    if (existing && currentRole !== SUPER_ADMIN_ROLE) {
+      await supabase.auth.admin.updateUserById(existing.id, {
+        app_metadata: { ...(existing.app_metadata || {}), role: SUPER_ADMIN_ROLE },
+      });
+    }
+    return;
+  }
+  console.warn("[auth] Could not ensure admin user:", createError.message);
 }
 
 async function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -43,6 +66,15 @@ async function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
 
   (req as any).user = user;
+  next();
+}
+
+function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  const user = (req as any).user;
+  const role = user?.app_metadata?.role as string | undefined;
+  if (!canManageUsers(role)) {
+    return res.status(403).json({ message: "Forbidden: admin or super admin required" });
+  }
   next();
 }
 
@@ -78,17 +110,108 @@ export async function registerRoutes(
   app.get("/api/auth/me", async (req, res) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.json({ isAdmin: false });
+      return res.json({ isAdmin: false, role: null });
     }
 
     const token = authHeader.split(" ")[1];
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error || !user) {
-      return res.json({ isAdmin: false });
+      return res.json({ isAdmin: false, role: null });
     }
 
-    res.json({ isAdmin: true, user });
+    // Fetch latest user from DB so role and mfa_disabled are current (not stale JWT)
+    const { data: fresh } = await supabase.auth.admin.getUserById(user.id);
+    const appMeta = fresh?.user?.app_metadata ?? user.app_metadata ?? {};
+    const role = (appMeta.role as string) ?? null;
+    const mfaDisabled = (appMeta.mfa_disabled as boolean) ?? false;
+    res.json({ isAdmin: true, user, role, mfaDisabled });
+  });
+
+  app.post("/api/me/mfa-disable", requireAuth, async (req, res) => {
+    const user = (req as any).user;
+    const { data: targetUser } = await supabase.auth.admin.getUserById(user.id);
+    if (!targetUser?.user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const { error } = await supabase.auth.admin.updateUserById(user.id, {
+      app_metadata: { ...(targetUser.user.app_metadata || {}), mfa_disabled: true },
+    });
+    if (error) return res.status(500).json({ message: error.message });
+    res.json({ ok: true, mfaDisabled: true });
+  });
+
+  app.post("/api/me/mfa-enable", requireAuth, async (req, res) => {
+    const user = (req as any).user;
+    const { data: targetUser } = await supabase.auth.admin.getUserById(user.id);
+    if (!targetUser?.user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const { error } = await supabase.auth.admin.updateUserById(user.id, {
+      app_metadata: { ...(targetUser.user.app_metadata || {}), mfa_disabled: false },
+    });
+    if (error) return res.status(500).json({ message: error.message });
+    res.json({ ok: true, mfaDisabled: false });
+  });
+
+  app.get("/api/users", requireAuth, requireAdmin, async (_req, res) => {
+    const { data, error } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+    if (error) {
+      return res.status(500).json({ message: error.message });
+    }
+    const users = (data?.users ?? []).map((u) => ({
+      id: u.id,
+      email: u.email,
+      role: (u.app_metadata?.role as string) ?? "viewer",
+      createdAt: u.created_at,
+    }));
+    res.json(users);
+  });
+
+  app.post("/api/users/invite", requireAuth, requireAdmin, async (req, res) => {
+    const { email, role } = req.body as { email?: string; role?: string };
+    if (!email || typeof email !== "string" || !email.includes("@")) {
+      return res.status(400).json({ message: "Valid email is required" });
+    }
+    const safeRole = role === "admin" || role === "editor" ? role : "viewer";
+    const tempPassword = req.body.temporaryPassword ?? crypto.randomUUID().slice(0, 12) + "Aa1!";
+    const { data, error } = await supabase.auth.admin.createUser({
+      email,
+      password: tempPassword,
+      email_confirm: true,
+      app_metadata: { role: safeRole },
+    });
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
+    res.status(201).json({
+      user: {
+        id: data.user?.id,
+        email: data.user?.email,
+        role: safeRole,
+      },
+      message: "User created. Share the temporary password with them securely.",
+      temporaryPassword: tempPassword,
+    });
+  });
+
+  app.patch("/api/users/:id", requireAuth, requireAdmin, async (req, res) => {
+    const id = req.params.id as string;
+    const { role } = req.body as { role?: string };
+    if (!role || !["admin", "editor", "viewer"].includes(role)) {
+      return res.status(400).json({ message: "Valid role (admin, editor, viewer) is required" });
+    }
+    const { data: targetUser } = await supabase.auth.admin.getUserById(id);
+    if (!targetUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const { error } = await supabase.auth.admin.updateUserById(id, {
+      app_metadata: { ...(targetUser.app_metadata || {}), role },
+    });
+    if (error) {
+      return res.status(500).json({ message: error.message });
+    }
+    res.json({ id, email: targetUser.email, role });
   });
 
   app.get("/api/customers", requireAuth, async (_req, res) => {
@@ -223,8 +346,6 @@ export async function registerRoutes(
   });
 
   app.post("/api/mpesa/callback", async (req, res) => {
-    console.log("[M-Pesa] Callback received:", JSON.stringify(req.body, null, 2));
-
     res.json({ ResultCode: 0, ResultDesc: "Accepted" });
 
     try {

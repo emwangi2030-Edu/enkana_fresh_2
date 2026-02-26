@@ -17,12 +17,14 @@ import RequisitionReport from "@/pages/requisition-report";
 import DeliveryDispatch from "@/pages/delivery-dispatch";
 import ProductsCatalogue from "@/pages/products-catalogue";
 import DashboardLayout from "@/components/dashboard-layout";
+import Dashboard from "@/pages/dashboard";
+import Settings from "@/pages/settings";
 
 function DashboardPages() {
   return (
     <DashboardLayout>
       <Switch>
-        <Route path="/" component={Orders} />
+        <Route path="/" component={Dashboard} />
         <Route path="/orders" component={Orders} />
         <Route path="/orders/requisition" component={RequisitionReport} />
         <Route path="/orders/dispatch" component={DeliveryDispatch} />
@@ -32,6 +34,7 @@ function DashboardPages() {
         <Route path="/customers/:id" component={CustomerDetails} />
         <Route path="/payments" component={Payments} />
         <Route path="/products" component={ProductsCatalogue} />
+        <Route path="/settings" component={Settings} />
         <Route path="/reports" component={Reports} />
         <Route path="/reports/enkana-margin-tracker" component={EnkanaMarginTracker} />
         <Route path="/reports/product-mix" component={Reports} />
@@ -48,6 +51,8 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/dashboard/login">{() => <Redirect to="/login" />}</Route>
       <Route path="/orders">{() => <Redirect to="/dashboard/orders" />}</Route>
+      <Route path="/orders/requisition">{() => <Redirect to="/dashboard/orders/requisition" />}</Route>
+      <Route path="/orders/dispatch">{() => <Redirect to="/dashboard/orders/dispatch" />}</Route>
       <Route path="/customers/:id">{(params) => <Redirect to={`/dashboard/customers/${params.id}`} />}</Route>
       <Route path="/dashboard" nest>
         <DashboardPages />

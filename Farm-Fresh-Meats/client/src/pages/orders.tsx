@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  fetchOrders, fetchCustomers, createCustomer, createOrder, updateOrder, deleteOrder,
+  fetchOrders, fetchCustomers, fetchProducts, createCustomer, createOrder, updateOrder, deleteOrder,
   fetchOrdersByCustomerId, requestMpesaPayment
 } from "@/lib/supabase-data";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,7 @@ import {
   RefreshCw, Percent, CalendarClock, Banknote
 } from "lucide-react";
 import { PRODUCTS, getActivePrice, type Order, type InsertOrder, type OrderItem, type Customer } from "@shared/schema";
+import type { ProductCatalogueItem } from "@shared/schema";
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -89,16 +90,26 @@ function summarizeItems(items: OrderItem[]): string {
 
 type ProductSelection = Record<string, { selected: boolean; qty: number; price: number }>;
 
-function emptyItemSelection(customerLockedMode: "promo" | "standard" | null = null): ProductSelection {
+const productToPrice = (p: { id: string; name: string; unit: string; promoPrice: number; standardPrice: number }, customerLockedMode: "promo" | "standard" | null) =>
+  getActivePrice(p, customerLockedMode);
+
+function emptyItemSelection(
+  products: Array<{ id: string; name: string; unit: string; promoPrice: number; standardPrice: number }>,
+  customerLockedMode: "promo" | "standard" | null = null
+): ProductSelection {
   const sel: ProductSelection = {};
-  PRODUCTS.forEach((p) => {
-    sel[p.id] = { selected: false, qty: 1, price: getActivePrice(p, customerLockedMode) };
+  products.forEach((p) => {
+    sel[p.id] = { selected: false, qty: 1, price: productToPrice(p, customerLockedMode) };
   });
   return sel;
 }
 
-function itemsToSelection(items: OrderItem[]): ProductSelection {
-  const sel = emptyItemSelection();
+function itemsToSelection(
+  items: OrderItem[],
+  products: Array<{ id: string; name: string; unit: string; promoPrice: number; standardPrice: number }>,
+  customerLockedMode: "promo" | "standard" | null = null
+): ProductSelection {
+  const sel = emptyItemSelection(products, customerLockedMode);
   items.forEach((item) => {
     if (sel[item.productId]) {
       sel[item.productId] = { selected: true, qty: item.quantity, price: item.pricePerUnit };
@@ -107,9 +118,12 @@ function itemsToSelection(items: OrderItem[]): ProductSelection {
   return sel;
 }
 
-function selectionToItems(sel: ProductSelection): OrderItem[] {
+function selectionToItems(
+  sel: ProductSelection,
+  products: Array<{ id: string; name: string; unit: string; promoPrice: number; standardPrice: number }>
+): OrderItem[] {
   const items: OrderItem[] = [];
-  PRODUCTS.forEach((p) => {
+  products.forEach((p) => {
     const s = sel[p.id];
     if (s?.selected && s.qty > 0) {
       items.push({
@@ -141,7 +155,18 @@ export default function Orders() {
   const [status, setStatus] = useState("pending");
   const [notes, setNotes] = useState("");
   const [deliveryMonth, setDeliveryMonth] = useState(getNextDeliveryMonth());
-  const [productSelection, setProductSelection] = useState(emptyItemSelection());
+  const [productSelection, setProductSelection] = useState<ProductSelection>({});
+
+  const { data: dbProducts } = useQuery<ProductCatalogueItem[]>({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+  const orderProducts = useMemo(() => {
+    const list = (dbProducts ?? []).filter((p) => p.available !== false);
+    return list.length > 0 ? list : [...PRODUCTS];
+  }, [dbProducts]);
 
   const { data: orders = [], isLoading, refetch: refetchOrders } = useQuery<Order[]>({
     queryKey: ["orders"],
@@ -157,18 +182,19 @@ export default function Orders() {
   });
   const selectedCustomer = selectedCustomerId ? customersList.find((c) => c.id === selectedCustomerId) : null;
 
-  // When selected customer changes, update product selection prices to their locked price mode (§3.2)
+  // When selected customer or product list changes, update product selection prices to their locked price mode (§3.2)
   useEffect(() => {
     const mode = selectedCustomer?.lockedPriceMode ?? null;
+    if (orderProducts.length === 0) return;
     setProductSelection((prev) => {
       const next: ProductSelection = {};
-      PRODUCTS.forEach((p) => {
+      orderProducts.forEach((p) => {
         const s = prev[p.id];
-        next[p.id] = s ? { ...s, price: getActivePrice(p, mode) } : { selected: false, qty: 1, price: getActivePrice(p, mode) };
+        next[p.id] = s ? { ...s, price: productToPrice(p, mode) } : { selected: false, qty: 1, price: productToPrice(p, mode) };
       });
       return next;
     });
-  }, [selectedCustomerId, selectedCustomer?.lockedPriceMode]);
+  }, [selectedCustomerId, selectedCustomer?.lockedPriceMode, orderProducts]);
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertOrder & { _saveCustomer?: boolean; _customerLocation?: string; _customerLocationPin?: string }) => {
@@ -259,7 +285,7 @@ export default function Orders() {
     setStatus("pending");
     setNotes("");
     setDeliveryMonth(getNextDeliveryMonth());
-    setProductSelection(emptyItemSelection());
+    setProductSelection(emptyItemSelection(orderProducts, selectedCustomer?.lockedPriceMode ?? null));
     setEditingOrder(null);
   }
 
@@ -272,7 +298,7 @@ export default function Orders() {
     setStatus(order.status);
     setNotes(order.notes || "");
     setDeliveryMonth(order.deliveryMonth || getNextDeliveryMonth());
-    setProductSelection(itemsToSelection(order.items as OrderItem[]));
+    setProductSelection(itemsToSelection(order.items as OrderItem[], orderProducts, selectedCustomer?.lockedPriceMode ?? null));
     setDialogOpen(true);
   }
 
@@ -290,13 +316,13 @@ export default function Orders() {
       if (custOrders.length > 0) {
         const lastOrder = custOrders[0];
         const lastItems = lastOrder.items as OrderItem[];
-        setProductSelection(itemsToSelection(lastItems));
+        setProductSelection(itemsToSelection(lastItems, orderProducts, selectedCustomer?.lockedPriceMode ?? null));
         setNotes(lastOrder.notes || "");
       }
     } catch {}
   }
 
-  const selectedItems = selectionToItems(productSelection);
+  const selectedItems = selectionToItems(productSelection, orderProducts);
   const totalAmount = selectedItems.reduce((sum, item) => sum + item.subtotal, 0);
 
   function handleSubmit(e: React.FormEvent) {
@@ -384,13 +410,13 @@ export default function Orders() {
   const repeatCustomersPct = uniqueCustomers > 0 ? Math.round((repeatCustomers / uniqueCustomers) * 100) : 0;
 
   return (
-    <div className="p-6 max-w-5xl mx-auto min-h-full bg-background">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="p-4 max-w-5xl mx-auto min-h-full bg-background">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-display font-bold tracking-tight text-foreground" data-testid="text-orders-title">
+          <h1 className="page-title" data-testid="text-orders-title">
             Orders
           </h1>
-          <p className="text-sm text-muted-foreground mt-1" data-testid="text-orders-subtitle">
+          <p className="page-subtitle" data-testid="text-orders-subtitle">
             Monthly subscription orders
           </p>
         </div>
@@ -426,7 +452,7 @@ export default function Orders() {
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
-                      onClick={() => { setCustomerType("new"); setSelectedCustomerId(""); setCustomerName(""); setPhone(""); setCustomerLocation(""); setCustomerLocationPin(""); setProductSelection(emptyItemSelection()); setNotes(""); }}
+                      onClick={() => { setCustomerType("new"); setSelectedCustomerId(""); setCustomerName(""); setPhone(""); setCustomerLocation(""); setCustomerLocationPin(""); setProductSelection(emptyItemSelection(orderProducts, selectedCustomer?.lockedPriceMode ?? null)); setNotes(""); }}
                       className={`flex items-center gap-2 rounded-lg border p-3 text-sm font-medium transition ${customerType === "new" ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5 text-[hsl(var(--primary))]" : "bg-white hover:bg-gray-50 text-gray-600"}`}
                       data-testid="button-new-customer"
                     >
@@ -435,7 +461,7 @@ export default function Orders() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setCustomerType("returning"); setCustomerName(""); setPhone(""); setCustomerLocation(""); setCustomerLocationPin(""); setProductSelection(emptyItemSelection()); setNotes(""); }}
+                      onClick={() => { setCustomerType("returning"); setCustomerName(""); setPhone(""); setCustomerLocation(""); setCustomerLocationPin(""); setProductSelection(emptyItemSelection(orderProducts, selectedCustomer?.lockedPriceMode ?? null)); setNotes(""); }}
                       className={`flex items-center gap-2 rounded-lg border p-3 text-sm font-medium transition ${customerType === "returning" ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5 text-[hsl(var(--primary))]" : "bg-white hover:bg-gray-50 text-gray-600"}`}
                       data-testid="button-returning-customer"
                     >
@@ -450,7 +476,7 @@ export default function Orders() {
                 <div>
                   <label className="text-sm font-medium mb-1 block">Select Customer</label>
                   {customersList.length === 0 ? (
-                    <div className="rounded-lg border border-dashed p-4 text-center text-sm text-gray-400">No saved customers yet. Create a new customer first.</div>
+                    <div className="rounded-lg border border-dashed p-3 text-center text-sm text-muted-foreground">No saved customers yet. Create a new customer first.</div>
                   ) : (
                     <Select value={selectedCustomerId} onValueChange={handleSelectReturningCustomer}>
                       <SelectTrigger data-testid="select-customer"><SelectValue placeholder="Choose a customer..." /></SelectTrigger>
@@ -492,7 +518,7 @@ export default function Orders() {
               <div>
                 <label className="text-sm font-medium mb-2 block">Select Products *</label>
                 <div className="space-y-2">
-                  {PRODUCTS.map((product) => {
+                  {orderProducts.map((product) => {
                     const sel = productSelection[product.id];
                     return (
                       <div key={product.id} className={`flex items-center gap-3 rounded-lg border p-3 transition ${sel?.selected ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5" : "bg-white hover:bg-gray-50"}`} data-testid={`product-row-${product.id}`}>
@@ -520,7 +546,7 @@ export default function Orders() {
                   })}
                 </div>
                 {selectedItems.length > 0 && (
-                  <div className="mt-3 flex items-center justify-between rounded-lg bg-gray-100 px-4 py-2">
+                  <div className="mt-2 flex items-center justify-between rounded-lg bg-gray-100 px-3 py-1.5">
                     <span className="text-sm font-medium text-gray-600">Total</span>
                     <span className="text-lg font-bold" data-testid="text-order-total">KES {totalAmount.toLocaleString()}</span>
                   </div>
@@ -563,86 +589,86 @@ export default function Orders() {
         </div>
       </div>
 
-      <section className="mb-6" aria-label="Revenue tracker">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Revenue tracker</h2>
+      <section className="mb-4" aria-label="Revenue tracker">
+        <h2 className="section-label mb-3">Revenue tracker</h2>
         <p className="text-xs text-muted-foreground mb-3">Per docs/enkana-cursor-instructions.md §7 — each card links to the relevant screen.</p>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
-          <Link href="/dashboard/orders">
+          <Link href="/orders">
             <Card className="overflow-hidden border-0 rounded-xl bg-card shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full" data-testid="stat-total-revenue">
-              <div className="flex items-center gap-4 p-4">
+              <div className="flex items-center gap-3 p-3">
                 <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                   <DollarSign className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Revenue</div>
-                  <div className="text-xl font-bold text-foreground">KES {totalRevenue.toLocaleString()}</div>
+                  <div className="metric-label">Total Revenue</div>
+                  <div className="metric-value">KES {totalRevenue.toLocaleString()}</div>
                   <div className="text-[10px] text-muted-foreground">Paid orders only</div>
                 </div>
               </div>
             </Card>
           </Link>
-          <Link href="/dashboard/payments">
+          <Link href="/payments">
             <Card className="overflow-hidden border-0 rounded-xl bg-card shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full" data-testid="stat-pending-kes">
-              <div className="flex items-center gap-4 p-4">
+              <div className="flex items-center gap-3 p-3">
                 <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-600">
                   <TrendingUp className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pending KES</div>
-                  <div className="text-xl font-bold text-foreground">KES {pendingKes.toLocaleString()}</div>
+                  <div className="metric-label">Pending KES</div>
+                  <div className="metric-value">KES {pendingKes.toLocaleString()}</div>
                 </div>
               </div>
             </Card>
           </Link>
-          <Link href="/dashboard/orders">
+          <Link href="/orders">
             <Card className="overflow-hidden border-0 rounded-xl bg-card shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full" data-testid="stat-next-delivery">
-              <div className="flex items-center gap-4 p-4">
+              <div className="flex items-center gap-3 p-3">
                 <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600">
                   <CalendarClock className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Next Delivery</div>
-                  <div className="text-lg font-bold text-foreground">{nextDeliveryCount} orders</div>
+                  <div className="metric-label">Next Delivery</div>
+                  <div className="metric-value text-lg">{nextDeliveryCount} orders</div>
                   <div className="text-[10px] text-muted-foreground">{nextDeliveryDate}</div>
                 </div>
               </div>
             </Card>
           </Link>
-          <Link href="/dashboard/orders">
+          <Link href="/orders">
             <Card className="overflow-hidden border-0 rounded-xl bg-card shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full" data-testid="stat-avg-order-value">
-              <div className="flex items-center gap-4 p-4">
+              <div className="flex items-center gap-3 p-3">
                 <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                   <ShoppingBag className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Avg Order Value</div>
-                  <div className="text-xl font-bold text-foreground">KES {avgOrderValue.toLocaleString()}</div>
+                  <div className="metric-label">Avg Order Value</div>
+                  <div className="metric-value">KES {avgOrderValue.toLocaleString()}</div>
                 </div>
               </div>
             </Card>
           </Link>
-          <Link href="/dashboard/reports/enkana-margin-tracker">
+          <Link href="/reports/enkana-margin-tracker">
             <Card className="overflow-hidden border-0 rounded-xl bg-card shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full" data-testid="stat-gross-margin">
-              <div className="flex items-center gap-4 p-4">
+              <div className="flex items-center gap-3 p-3">
                 <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-600">
                   <Percent className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Gross Margin %</div>
-                  <div className="text-xl font-bold text-foreground">See Margin Tracker</div>
+                  <div className="metric-label">Gross Margin %</div>
+                  <div className="metric-value">See Margin Tracker</div>
                 </div>
               </div>
             </Card>
           </Link>
-          <Link href="/dashboard/customers">
+          <Link href="/customers">
             <Card className="overflow-hidden border-0 rounded-xl bg-card shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full" data-testid="stat-repeat-customers">
-              <div className="flex items-center gap-4 p-4">
+              <div className="flex items-center gap-3 p-3">
                 <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600">
                   <Users className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Repeat Customers %</div>
-                  <div className="text-xl font-bold text-foreground">{repeatCustomersPct}%</div>
+                  <div className="metric-label">Repeat Customers %</div>
+                  <div className="metric-value">{repeatCustomersPct}%</div>
                   <div className="text-[10px] text-muted-foreground">{repeatCustomers} of {uniqueCustomers}</div>
                 </div>
               </div>
@@ -651,7 +677,7 @@ export default function Orders() {
         </div>
       </section>
 
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input data-testid="input-search" className="pl-10 border-gray-200 bg-white shadow-sm" placeholder="Search by name, phone, or product..." value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -676,12 +702,12 @@ export default function Orders() {
       ) : filtered.length === 0 ? (
         <Card className="py-16 text-center border-0 rounded-xl bg-card shadow-sm">
           <Package className="mx-auto h-12 w-12 text-primary/30" />
-          <div className="mt-4 text-lg font-semibold text-foreground" data-testid="text-empty">No orders yet</div>
+          <div className="mt-4 empty-state-title" data-testid="text-empty">No orders yet</div>
           <div className="mt-1 text-sm text-muted-foreground">Add your first monthly order using the "New Order" button above.</div>
         </Card>
       ) : (
         <Card className="border-0 rounded-xl bg-card shadow-sm overflow-hidden" data-testid="orders-table">
-          <div className="hidden sm:grid grid-cols-[1fr_120px_100px_90px_110px_40px] gap-3 px-4 py-3 bg-muted/50 border-b border-border text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="hidden sm:grid grid-cols-[1fr_120px_100px_90px_110px_40px] gap-2 px-3 py-2 bg-muted/50 border-b border-border table-header">
             <div>CUSTOMER</div>
             <div>ITEMS</div>
             <div>DELIVERY</div>
@@ -702,7 +728,7 @@ export default function Orders() {
                   <button
                     type="button"
                     onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
-                    className={`w-full text-left px-4 py-3 transition hover:bg-gray-50/80 ${isExpanded ? "bg-gray-50/50" : ""}`}
+                    className={`w-full text-left px-3 py-2 transition hover:bg-gray-50/80 ${isExpanded ? "bg-gray-50/50" : ""}`}
                     data-testid={`row-order-${order.id}`}
                   >
                     <div className="sm:grid sm:grid-cols-[1fr_120px_100px_90px_110px_40px] sm:gap-3 sm:items-center">
@@ -751,8 +777,8 @@ export default function Orders() {
                   </button>
 
                   {isExpanded && (
-                    <div className="px-4 pb-4 pt-1 bg-gray-50/50 border-t border-gray-100" data-testid={`detail-order-${order.id}`}>
-                      <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="px-3 pb-3 pt-1 bg-gray-50/50 border-t border-gray-100" data-testid={`detail-order-${order.id}`}>
+                      <div className="grid gap-3 sm:grid-cols-2">
                         <div className="space-y-3">
                           <div>
                             <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-1">Customer</div>
@@ -812,7 +838,7 @@ export default function Orders() {
                             <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-1">Items</div>
                             <div className="space-y-1.5">
                               {orderItems.map((item) => {
-                                const defaultProduct = PRODUCTS.find((p) => p.id === item.productId);
+                                const defaultProduct = orderProducts.find((p) => p.id === item.productId);
                                 const isCustomPrice = defaultProduct && item.pricePerUnit !== getActivePrice(defaultProduct, null);
                                 return (
                                   <div key={item.productId} className="flex items-center justify-between text-sm" data-testid={`text-item-${order.id}-${item.productId}`}>

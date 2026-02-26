@@ -57,63 +57,61 @@ export default function Payments() {
   const unresolvedExceptions = exceptions.filter((e) => !e.resolved).length;
 
   return (
-    <div className="p-6 max-w-5xl mx-auto enkana-section-green min-h-full">
-      <div className="mb-6">
-        <h1 className="text-2xl font-display tracking-tight text-foreground" data-testid="text-page-title">
-          Payments
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">M-Pesa payment records and exceptions</p>
+    <div className="p-4 max-w-5xl mx-auto enkana-section-green min-h-full">
+      <div className="mb-4">
+        <h1 className="page-title" data-testid="text-page-title">Payments</h1>
+        <p className="page-subtitle">M-Pesa payment records and exceptions</p>
       </div>
 
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
         <Card className="enkana-card enkana-card-hover overflow-hidden border border-border shadow-sm ring-soft" data-testid="stat-total-received">
-          <div className="flex items-center gap-4 p-4">
+          <div className="flex items-center gap-3 p-3">
             <div className="enkana-icon-box grid h-11 w-11 shrink-0 place-items-center rounded-xl text-primary">
               <DollarSign className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Received</div>
-              <div className="text-xl font-bold text-foreground">KES {totalReceived.toLocaleString()}</div>
+              <div className="metric-label">Total Received</div>
+              <div className="metric-value">KES {totalReceived.toLocaleString()}</div>
             </div>
           </div>
         </Card>
         <Card className="enkana-card enkana-card-hover overflow-hidden border border-border shadow-sm ring-soft" data-testid="stat-successful">
-          <div className="flex items-center gap-4 p-4">
+          <div className="flex items-center gap-3 p-3">
             <div className="enkana-icon-box grid h-11 w-11 shrink-0 place-items-center rounded-xl text-primary">
               <TrendingUp className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Successful</div>
-              <div className="text-xl font-bold text-foreground">{successfulPayments}</div>
+              <div className="metric-label">Successful</div>
+              <div className="metric-value">{successfulPayments}</div>
             </div>
           </div>
         </Card>
         <Card className="enkana-card enkana-card-hover overflow-hidden border border-border shadow-sm ring-soft" data-testid="stat-total-payments">
-          <div className="flex items-center gap-4 p-4">
+          <div className="flex items-center gap-3 p-3">
             <div className="enkana-icon-box grid h-11 w-11 shrink-0 place-items-center rounded-xl text-accent">
               <CreditCard className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Payments</div>
-              <div className="text-xl font-bold text-foreground">{payments.length}</div>
+              <div className="metric-label">Total Payments</div>
+              <div className="metric-value">{payments.length}</div>
             </div>
           </div>
         </Card>
         <Card className="enkana-card enkana-card-hover overflow-hidden border border-border shadow-sm ring-soft" data-testid="stat-exceptions">
-          <div className="flex items-center gap-4 p-4">
+          <div className="flex items-center gap-3 p-3">
             <div className={`enkana-icon-box grid h-11 w-11 shrink-0 place-items-center rounded-xl ${unresolvedExceptions > 0 ? "text-destructive" : "text-muted-foreground"}`}>
               <AlertTriangle className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Unresolved</div>
-              <div className="text-xl font-bold text-foreground">{unresolvedExceptions}</div>
+              <div className="metric-label">Unresolved</div>
+              <div className="metric-value">{unresolvedExceptions}</div>
             </div>
           </div>
         </Card>
       </div>
 
       <Tabs defaultValue="payments" className="w-full">
-        <TabsList className="mb-4">
+        <TabsList className="mb-3">
           <TabsTrigger value="payments" data-testid="tab-payments">
             Payments ({payments.length})
           </TabsTrigger>
@@ -141,19 +139,19 @@ export default function Payments() {
           ) : (
             <div className="space-y-2">
               {payments.map((payment) => (
-                <Card key={payment.id} className="enkana-card border border-border p-4 shadow-sm ring-soft" data-testid={`payment-${payment.id}`}>
-                  <div className="flex items-start justify-between gap-4">
+                <Card key={payment.id} className="enkana-card border border-border p-3 shadow-sm ring-soft" data-testid={`payment-${payment.id}`}>
+                  <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                        <span className="font-semibold text-gray-900">
+                        <span className="font-semibold text-foreground">
                           KES {(payment.amount || 0).toLocaleString()}
                         </span>
                         <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
                           Successful
                         </Badge>
                       </div>
-                      <div className="mt-1.5 flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                      <div className="mt-1.5 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Hash className="h-3 w-3" />
                           {payment.mpesaTransactionId}
@@ -162,7 +160,7 @@ export default function Payments() {
                           <Phone className="h-3 w-3" />
                           {payment.phoneNumber}
                         </span>
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-muted-foreground">
                           {new Date(payment.createdAt).toLocaleString()}
                         </span>
                       </div>
@@ -190,10 +188,10 @@ export default function Payments() {
               {exceptions.map((exception) => (
                 <Card
                   key={exception.id}
-                  className={`enkana-card border border-border p-4 shadow-sm ring-soft ${exception.resolved ? "opacity-60" : ""}`}
+                  className={`enkana-card border border-border p-3 shadow-sm ring-soft ${exception.resolved ? "opacity-60" : ""}`}
                   data-testid={`exception-${exception.id}`}
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         {exception.resolved ? (
@@ -201,7 +199,7 @@ export default function Payments() {
                         ) : (
                           <XCircle className="h-4 w-4 text-red-500" />
                         )}
-                        <span className="font-semibold text-gray-900">
+                        <span className="font-semibold text-foreground">
                           KES {(exception.amount || 0).toLocaleString()}
                         </span>
                         <Badge
@@ -222,12 +220,12 @@ export default function Payments() {
                       </div>
                       <div className="mt-1.5 space-y-1">
                         {exception.reason && (
-                          <div className="text-sm text-gray-600">{exception.reason}</div>
+                          <div className="text-sm text-muted-foreground">{exception.reason}</div>
                         )}
                         {exception.resultDesc && (
-                          <div className="text-xs text-gray-400">{exception.resultDesc}</div>
+                          <div className="text-xs text-muted-foreground">{exception.resultDesc}</div>
                         )}
-                        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                           {exception.phoneNumber && (
                             <span className="flex items-center gap-1">
                               <Phone className="h-3 w-3" />
@@ -240,7 +238,7 @@ export default function Payments() {
                               {exception.mpesaTransactionId}
                             </span>
                           )}
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-muted-foreground">
                             {new Date(exception.createdAt).toLocaleString()}
                           </span>
                         </div>

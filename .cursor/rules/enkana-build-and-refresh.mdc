@@ -1,0 +1,30 @@
+---
+description: After Farm-Fresh-Meats client changes, run dev or build so the app reflects changes and browser refreshes.
+globs: Farm-Fresh-Meats/client/**/*
+alwaysApply: false
+---
+
+# Enkana Fresh — Build & Refresh
+
+When you edit **Farm-Fresh-Meats** client code (UI, layout, dashboard, components, pages, styles), ensure the user sees changes without manual steps.
+
+## Preferred: Development (auto-refresh)
+
+1. **Start or ensure dev server is running** so Vite HMR applies and the browser refreshes automatically:
+   - Run task: **Start Farm-Fresh-Meats (dev)** (or **Run Farm-Fresh-Meats (dev) in Simple Browser** to also open the app), or
+   - From repo root: `ROOT="Farm-Fresh-Meats" /Users/mac/.cursor/scripts/with-node.sh npm run dev`
+   - From `Farm-Fresh-Meats/`: `npm run dev`
+2. **Do not** ask the user to "rebuild or run npm run dev" — run it yourself when you’ve made client changes (e.g. start dev in the background if it’s not already running).
+3. Tell the user: "Dev server is running; the app will refresh automatically when you save."
+
+## If they use production (npm start)
+
+1. Run **Build Farm-Fresh-Meats** (or `npm run build` in `Farm-Fresh-Meats/`).
+2. Remind them to restart the server (e.g. run **Restart Farm-Fresh-Meats (dev)** or `npm run build:restart` in Farm-Fresh-Meats), or run **Build & Restart (local)** so the new build is served.
+
+## Tasks (Run Task in Cursor)
+
+- **Start Farm-Fresh-Meats (dev)** — dev server, HMR, auto-refresh.
+- **Run Farm-Fresh-Meats (dev) in Simple Browser** — start dev + open in-editor browser.
+- **Build Farm-Fresh-Meats** — production build only.
+- **Build & Restart (local)** — build then restart dev server.

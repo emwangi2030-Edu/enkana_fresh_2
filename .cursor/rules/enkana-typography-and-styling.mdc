@@ -1,0 +1,63 @@
+---
+description: Complete typography scale for Enkana Fresh (Farm-Fresh-Meats) — fonts, sizes, weights, colors.
+globs: Farm-Fresh-Meats/client/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# Enkana Fresh — Typography Scale
+
+All text uses the scale below. CSS variables and utility classes are in `client/src/index.css`.
+
+## Font families
+
+- `--font-display`: 'Fraunces', serif — headings, hero, page titles, metric values, brand.
+- `--font-sans`: 'DM Sans', sans-serif — body, UI, labels, tables, forms, nav.
+- `--font-mono`: system monospace — **only** footer build info and OTP/MFA input.
+
+## Variables (:root)
+
+- **Sizes:** `--text-hero` 42px, `--text-page` 28px, `--text-section` 18px, `--text-metric` 32px, `--text-body-lg` 16px, `--text-body` 14px, `--text-body-sm` 13px, `--text-label` 12px, `--text-xs` 11px.
+- **Weights:** `--weight-regular` 400, `--weight-medium` 500, `--weight-semibold` 600, `--weight-bold` 700.
+- **Colors:** `--color-text-primary` #111827, `--color-text-heading` #1a3a2a, `--color-text-muted` #6b7280, `--color-text-subtle` #9ca3af, `--color-text-inverse` #ffffff, `--color-text-cream` #f5f0e8, `--color-text-amber` #e9a82a, `--color-text-error` #dc2626, `--color-text-nav` #374151.
+
+## Utility classes (use these, not ad-hoc sizes)
+
+| Role | Class | Font | Size | Weight | Color |
+|------|--------|------|------|--------|-------|
+| Hero headline (login) | `text-hero` | Fraunces | 42px | 700 | cream |
+| Page title | `page-title` | Fraunces | 28px | 700 | #1a3a2a |
+| Page subtitle | `page-subtitle` | DM Sans | 14px | 400 | #6b7280 |
+| Section label (uppercase) | `section-label` | DM Sans | 11px | 600 | #6b7280 |
+| Section heading | `section-heading` | Fraunces | 18px | 600 | #1a3a2a |
+| Metric value | `metric-value` | Fraunces | 32px | 700 | #1a3a2a |
+| Metric label (under value) | `metric-label` | DM Sans | 12px | 400 | #6b7280 |
+| Metric card title (above value) | `metric-card-title` | DM Sans | 11px | 600 | #6b7280 |
+| Table header | `table-header` | DM Sans | 11px | 600 | #6b7280 |
+| Table cell primary | `table-cell-primary` | DM Sans | 14px | 400 | #111827 |
+| Table cell secondary | `table-cell-secondary` | DM Sans | 13px | 400 | #6b7280 |
+| Form label | `form-label` | DM Sans | 13px | 500 | #374151 |
+| Form helper | `form-helper` | DM Sans | 12px | 400 | #6b7280 |
+| Form error | `form-error` | DM Sans | 12px | 400 | #dc2626 |
+| Primary button text | `btn-primary-text` | DM Sans | 14px | 500 | #ffffff |
+| Secondary button text | `btn-secondary-text` | DM Sans | 14px | 500 | #1a3a2a |
+| Amber link | `text-link-amber` | DM Sans | 13px | 400 | #e9a82a |
+| Nav brand | `nav-brand` | Fraunces | 16px | 600 | #1a3a2a |
+| Nav brand subtitle | `nav-brand-subtitle` | DM Sans | 11px | 400 | #6b7280 |
+| Nav item | `nav-item` | DM Sans | 13px | 500 | #374151 / #1a3a2a active |
+| Nav item sub | `nav-item-sub` | DM Sans | 13px | 400 | #6b7280 / #1a3a2a active |
+| Create New button | `nav-create-btn` | DM Sans | 13px | 500 | #ffffff |
+| Badge text | `badge-text` | DM Sans | 11px | 600 | capitalize |
+| Alert banner main | `alert-banner-main` | DM Sans | 14px | 500 | #1a3a2a |
+| Alert banner warning | `alert-banner-warning` | DM Sans | 13px | 600 | #e9a82a |
+| Footer build | `footer-build` | Monospace | 11px | 400 | #9ca3af |
+
+## Page layout (compact)
+
+- Content wrapper: `p-4 max-w-5xl mx-auto min-h-full bg-background`.
+- Section spacing: `mb-3` / `mb-4`; card padding: `p-3`.
+
+## Do not
+
+- Use `font-family: Georgia`, `serif`, or `system-ui` — use `var(--font-display)` or `var(--font-sans)`.
+- Use monospace except for footer and OTP/MFA fields.
+- Use hardcoded font sizes outside the scale; use the variables or utility classes above.

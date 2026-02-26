@@ -57,12 +57,16 @@ type ViewMode = "cards" | "table";
 type SortKey = "totalSpent" | "lastOrderDate" | "name" | "orderCount" | "zone" | "health";
 type HealthStatus = "active" | "at_risk" | "lapsed" | "new" | null;
 
+/** Days since last order: active ≤30, at_risk 31–60, lapsed >60 */
+const HEALTH_DAYS_ACTIVE = 30;
+const HEALTH_DAYS_AT_RISK = 60;
+
 function getHealthStatus(orderCount: number, lastOrderDate: string | null): HealthStatus {
   if (orderCount <= 1) return "new";
   if (!lastOrderDate) return "lapsed";
   const days = (Date.now() - new Date(lastOrderDate).getTime()) / (1000 * 60 * 60 * 24);
-  if (days <= 30) return "active";
-  if (days <= 60) return "at_risk";
+  if (days <= HEALTH_DAYS_ACTIVE) return "active";
+  if (days <= HEALTH_DAYS_AT_RISK) return "at_risk";
   return "lapsed";
 }
 
@@ -71,8 +75,8 @@ function formatRelativeDate(dateStr: string | null): string {
   const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
   if (days === 0) return "Today";
   if (days === 1) return "1 day ago";
-  if (days < 30) return `${days} days ago`;
-  if (days < 60) return `${days} days ago`;
+  if (days < HEALTH_DAYS_ACTIVE) return `${days} days ago`;
+  if (days < HEALTH_DAYS_AT_RISK) return `${days} days ago`;
   return new Date(dateStr).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
 }
 
@@ -343,18 +347,18 @@ export default function Customers() {
   const metricCardActive = "ring-2 ring-primary/30";
 
   return (
-    <div className="p-6 max-w-5xl mx-auto min-h-full bg-background">
+    <div className="p-4 max-w-5xl mx-auto min-h-full bg-background">
       {/* ZONE 1 — Customer metrics dashboard (Orders-style cards) */}
-      <section className="mb-6" aria-label="Customer metrics">
+      <section className="mb-4" aria-label="Customer metrics">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
           <Card className={metricCardBase}>
-            <div className="flex items-center gap-4 p-4">
+              <div className="flex items-center gap-3 p-3">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                 <Users className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Customers</div>
-                <div className="text-xl font-bold text-foreground">{metrics.totalCustomers}</div>
+                <div className="metric-label">Total Customers</div>
+                <div className="metric-value">{metrics.totalCustomers}</div>
                 <div className="text-[10px] text-muted-foreground">all time</div>
               </div>
             </div>
@@ -366,13 +370,13 @@ export default function Customers() {
               setPage(1);
             }}
           >
-            <div className="flex items-center gap-4 p-4">
+              <div className="flex items-center gap-3 p-3">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600">
                 <Percent className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Repeat Customer %</div>
-                <div className="text-xl font-bold text-foreground">{metrics.repeatPct}%</div>
+                <div className="metric-label">Repeat Customer %</div>
+                <div className="metric-value">{metrics.repeatPct}%</div>
                 <div className="text-[10px] text-muted-foreground">placed 2+ orders</div>
               </div>
             </div>
@@ -386,13 +390,13 @@ export default function Customers() {
               setPage(1);
             }}
           >
-            <div className="flex items-center gap-4 p-4">
+              <div className="flex items-center gap-3 p-3">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                 <DollarSign className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Avg Lifetime Value</div>
-                <div className="text-xl font-bold text-foreground">KES {Math.round(metrics.avgLifetime).toLocaleString()}</div>
+                <div className="metric-label">Avg Lifetime Value</div>
+                <div className="metric-value">KES {Math.round(metrics.avgLifetime).toLocaleString()}</div>
                 <div className="text-[10px] text-muted-foreground">per customer</div>
               </div>
             </div>
@@ -404,13 +408,13 @@ export default function Customers() {
               setPage(1);
             }}
           >
-            <div className="flex items-center gap-4 p-4">
+              <div className="flex items-center gap-3 p-3">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-600">
                 <AlertTriangle className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">At Risk</div>
-                <div className="text-xl font-bold text-foreground">{metrics.atRiskCount}</div>
+                <div className="metric-label">At Risk</div>
+                <div className="metric-value">{metrics.atRiskCount}</div>
                 <div className="text-[10px] text-muted-foreground">31–60 days</div>
               </div>
             </div>
@@ -422,13 +426,13 @@ export default function Customers() {
               setPage(1);
             }}
           >
-            <div className="flex items-center gap-4 p-4">
+              <div className="flex items-center gap-3 p-3">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-red-50 text-red-600">
                 <UserX className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Lapsed</div>
-                <div className="text-xl font-bold text-foreground">{metrics.lapsedCount}</div>
+                <div className="metric-label">Lapsed</div>
+                <div className="metric-value">{metrics.lapsedCount}</div>
                 <div className="text-[10px] text-muted-foreground">60+ days</div>
               </div>
             </div>
@@ -441,13 +445,13 @@ export default function Customers() {
               setPage(1);
             }}
           >
-            <div className="flex items-center gap-4 p-4">
+              <div className="flex items-center gap-3 p-3">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                 <MapPin className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Top Zone</div>
-                <div className="text-lg font-bold text-foreground truncate" title={metrics.topZone}>{metrics.topZone}</div>
+                <div className="metric-label">Top Zone</div>
+                <div className="metric-value text-lg truncate" title={metrics.topZone}>{metrics.topZone}</div>
                 <div className="text-[10px] text-muted-foreground">by orders</div>
               </div>
             </div>
@@ -456,12 +460,12 @@ export default function Customers() {
       </section>
 
       {/* ZONE 2 — List controls + table/cards */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-display font-bold tracking-tight text-foreground" data-testid="text-page-title">
+          <h1 className="page-title" data-testid="text-page-title">
             Customers
           </h1>
-          <p className="text-sm text-muted-foreground mt-1" data-testid="text-customers-subtitle">
+          <p className="page-subtitle" data-testid="text-customers-subtitle">
             {total === 0
               ? "No customers"
               : total <= pageSize && !search
@@ -511,7 +515,7 @@ export default function Customers() {
 
       {/* Duplicate detection banner */}
       {duplicatePairs.length > 0 && (
-        <Card className="mb-6 rounded-xl border border-amber-200 bg-amber-50 shadow-sm text-amber-900">
+        <Card className="mb-4 rounded-xl border border-amber-200 bg-amber-50 shadow-sm text-amber-900">
           <div className="p-4">
             <p className="font-medium">
               {duplicatePairs.length} possible duplicate customer{duplicatePairs.length !== 1 ? "s" : ""} detected (same name + delivery zone).
@@ -565,7 +569,7 @@ export default function Customers() {
       ) : total === 0 ? (
         <Card className="py-16 text-center border-0 rounded-xl bg-card shadow-sm">
           <Users className="mx-auto h-12 w-12 text-muted-foreground/50" />
-          <div className="mt-4 text-lg font-semibold text-foreground" data-testid="text-empty">
+          <div className="mt-4 empty-state-title" data-testid="text-empty">
             {search ? "No matching customers" : "No customers yet"}
           </div>
           <div className="mt-1 text-sm text-muted-foreground">
@@ -575,7 +579,7 @@ export default function Customers() {
       ) : (
         <>
           {selectedIds.size > 0 && (
-            <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/30 px-4 py-2">
+            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-1.5">
               <span className="text-sm font-medium">{selectedIds.size} selected</span>
               <Button
                 variant="outline"

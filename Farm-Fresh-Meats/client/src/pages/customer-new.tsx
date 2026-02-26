@@ -52,18 +52,18 @@ export default function CustomerNew() {
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto enkana-section-green min-h-full">
+    <div className="p-4 max-w-2xl mx-auto enkana-section-green min-h-full">
       <Link href="/customers">
-        <Button variant="ghost" size="sm" className="mb-4 -ml-2">
+        <Button variant="ghost" size="sm" className="mb-3 -ml-2">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Customers
         </Button>
       </Link>
-      <h1 className="text-2xl font-display tracking-tight text-foreground mb-2">New Customer</h1>
-      <p className="text-sm text-muted-foreground mb-6">Add a customer record. Phone must be unique.</p>
+      <h1 className="page-title mb-2">New Customer</h1>
+      <p className="text-sm text-muted-foreground mb-4">Add a customer record. Phone must be unique.</p>
 
       {duplicateBanner && (
-        <Card className="mb-6 p-4 border-amber-200 bg-amber-50 text-amber-900">
+        <Card className="mb-4 p-3 border-amber-200 bg-amber-50 text-amber-900">
           <p className="font-medium">A customer with this phone already exists.</p>
           <div className="mt-2 flex gap-2">
             <Button variant="outline" size="sm" asChild>
@@ -76,7 +76,7 @@ export default function CustomerNew() {
         </Card>
       )}
 
-      <Card className="enkana-card border border-border p-6 ring-soft">
+      <Card className="enkana-card border border-border p-4 ring-soft">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="name">Name *</Label>

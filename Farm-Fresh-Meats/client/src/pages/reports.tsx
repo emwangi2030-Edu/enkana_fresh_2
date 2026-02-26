@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchOrders, fetchCustomers } from "@/lib/supabase-data";
+import { fetchOrders, fetchCustomers, fetchProducts } from "@/lib/supabase-data";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ import {
   DollarSign, TrendingUp, ShoppingBag, CheckCircle2, Loader2
 } from "lucide-react";
 import { PRODUCTS, type Order, type OrderItem, type Customer } from "@shared/schema";
+import type { ProductCatalogueItem } from "@shared/schema";
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -72,6 +73,17 @@ export default function Reports() {
     queryKey: ["customers"],
     queryFn: fetchCustomers,
   });
+
+  const { data: dbProducts } = useQuery<ProductCatalogueItem[]>({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+  const reportProducts = useMemo(
+    () => ((dbProducts ?? []).length > 0 ? dbProducts! : [...PRODUCTS]),
+    [dbProducts]
+  );
 
   const monthOrders = selectedMonth === "all"
     ? orders
@@ -134,7 +146,7 @@ export default function Reports() {
         [],
         ["Product Summary"],
         ["Product", "Total Qty", "Revenue (KES)"],
-        ...PRODUCTS.map((p) => {
+        ...reportProducts.map((p) => {
           const t = productTotals[p.id];
           return [p.name, t ? `${t.qty} ${p.unit}` : "0", t ? t.revenue : 0];
         }),
@@ -215,7 +227,7 @@ export default function Reports() {
         autoTable(doc, {
           startY: finalY + 14,
           head: [["Product", "Total Qty", "Revenue (KES)"]],
-          body: PRODUCTS.map((p) => {
+          body: reportProducts.map((p) => {
             const t = productTotals[p.id];
             return [p.name, t ? `${t.qty} ${p.unit}` : "0", t ? `KES ${t.revenue.toLocaleString()}` : "KES 0"];
           }),
@@ -234,10 +246,10 @@ export default function Reports() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto enkana-section-green min-h-full">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="p-4 max-w-5xl mx-auto enkana-section-green min-h-full">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-display tracking-tight text-foreground" data-testid="text-report-title">
+          <h1 className="page-title" data-testid="text-report-title">
             Monthly Report
           </h1>
           <p className="text-sm text-muted-foreground mt-1" data-testid="text-report-subtitle">
@@ -273,54 +285,54 @@ export default function Reports() {
       <p className="mb-3 text-sm text-muted-foreground">
         Showing: <span className="font-medium text-foreground">{selectedMonth === "all" ? "All Months" : formatDeliveryMonth(selectedMonth)}</span>
       </p>
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
         <Card className="enkana-card enkana-card-hover overflow-hidden border border-border shadow-sm ring-soft" data-testid="report-stat-orders">
-          <div className="flex items-center gap-4 p-4">
+              <div className="flex items-center gap-3 p-3">
             <div className="enkana-icon-box grid h-11 w-11 shrink-0 place-items-center rounded-xl text-accent">
               <ShoppingBag className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Orders</div>
-              <div className="text-xl font-bold text-foreground">{monthOrders.length}</div>
+              <div className="metric-label">Orders</div>
+              <div className="metric-value">{monthOrders.length}</div>
             </div>
           </div>
         </Card>
         <Card className="enkana-card enkana-card-hover overflow-hidden border border-border shadow-sm ring-soft" data-testid="report-stat-revenue">
-          <div className="flex items-center gap-4 p-4">
+              <div className="flex items-center gap-3 p-3">
             <div className="enkana-icon-box grid h-11 w-11 shrink-0 place-items-center rounded-xl text-primary">
               <DollarSign className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Revenue</div>
-              <div className="text-xl font-bold text-foreground">KES {totalRevenue.toLocaleString()}</div>
+              <div className="metric-label">Revenue</div>
+              <div className="metric-value">KES {totalRevenue.toLocaleString()}</div>
             </div>
           </div>
         </Card>
         <Card className="enkana-card enkana-card-hover overflow-hidden border border-border shadow-sm ring-soft" data-testid="report-stat-paid">
-          <div className="flex items-center gap-4 p-4">
+              <div className="flex items-center gap-3 p-3">
             <div className="enkana-icon-box grid h-11 w-11 shrink-0 place-items-center rounded-xl text-primary">
               <CheckCircle2 className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Paid</div>
-              <div className="text-xl font-bold text-foreground">KES {paidAmount.toLocaleString()}</div>
+              <div className="metric-label">Paid</div>
+              <div className="metric-value">KES {paidAmount.toLocaleString()}</div>
             </div>
           </div>
         </Card>
         <Card className="enkana-card enkana-card-hover overflow-hidden border border-border shadow-sm ring-soft" data-testid="report-stat-pending">
-          <div className="flex items-center gap-4 p-4">
+              <div className="flex items-center gap-3 p-3">
             <div className="enkana-icon-box grid h-11 w-11 shrink-0 place-items-center rounded-xl text-accent">
               <TrendingUp className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pending</div>
-              <div className="text-xl font-bold text-foreground">KES {pendingAmount.toLocaleString()}</div>
+              <div className="metric-label">Pending</div>
+              <div className="metric-value">KES {pendingAmount.toLocaleString()}</div>
             </div>
           </div>
         </Card>
       </div>
 
-      <div className="mb-4 flex items-center gap-2 justify-end">
+      <div className="mb-3 flex items-center gap-2 justify-end">
         <Button
           variant="outline"
           size="sm"
@@ -345,16 +357,16 @@ export default function Reports() {
         </Button>
       </div>
 
-      {PRODUCTS.length > 0 && Object.keys(productTotals).length > 0 && (
-        <Card className="enkana-card border border-border shadow-sm mb-4 overflow-hidden ring-soft" data-testid="product-summary">
-          <div className="px-4 py-3 bg-muted/50 border-b border-border">
-            <h3 className="text-sm font-semibold text-foreground">Product Summary</h3>
+      {reportProducts.length > 0 && Object.keys(productTotals).length > 0 && (
+        <Card className="enkana-card border border-border shadow-sm mb-3 overflow-hidden ring-soft" data-testid="product-summary">
+          <div className="px-3 py-2 bg-muted/50 border-b border-border">
+            <h3 className="section-label">Product Summary</h3>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border">
-            {PRODUCTS.map((p) => {
+            {reportProducts.map((p) => {
               const t = productTotals[p.id];
               return (
-                <div key={p.id} className="p-4 text-center" data-testid={`product-stat-${p.id}`}>
+                <div key={p.id} className="p-3 text-center" data-testid={`product-stat-${p.id}`}>
                   <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{p.name}</div>
                   <div className="text-lg font-bold text-foreground mt-1">{t ? t.qty : 0} <span className="text-xs font-normal text-muted-foreground">{p.unit}</span></div>
                   <div className="text-xs text-muted-foreground">KES {(t ? t.revenue : 0).toLocaleString()}</div>
@@ -366,12 +378,12 @@ export default function Reports() {
       )}
 
       {ordersLoading ? (
-        <div className="py-20 text-center text-gray-400" data-testid="text-loading">Loading...</div>
+        <div className="py-20 text-center text-muted-foreground" data-testid="text-loading">Loading...</div>
       ) : monthOrders.length === 0 ? (
         <Card className="py-16 text-center border-0 shadow-sm">
           <Package className="mx-auto h-12 w-12 text-[hsl(var(--primary))]/30" />
-          <div className="mt-4 text-lg font-semibold text-gray-600" data-testid="text-empty">No orders {selectedMonth === "all" ? "found" : `for ${formatDeliveryMonth(selectedMonth)}`}</div>
-          <div className="mt-1 text-sm text-gray-400">
+          <div className="mt-4 empty-state-title" data-testid="text-empty">No orders {selectedMonth === "all" ? "found" : `for ${formatDeliveryMonth(selectedMonth)}`}</div>
+          <div className="mt-1 empty-state-body">
             {selectedMonth === "all" ? "Orders appear here once you add them from the Orders page." : "Try selecting \"All Months\" or a different delivery month above."}
           </div>
         </Card>
@@ -381,13 +393,13 @@ export default function Reports() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-400 w-10">#</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Customer</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden md:table-cell">Phone</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden lg:table-cell">Items</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Status</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Amount</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Payment</th>
+                  <th className="text-left px-3 py-2 table-header w-10">#</th>
+                  <th className="text-left px-3 py-2 table-header">Customer</th>
+                  <th className="text-left px-3 py-2 table-header hidden md:table-cell">Phone</th>
+                  <th className="text-left px-3 py-2 table-header hidden lg:table-cell">Items</th>
+                  <th className="text-left px-3 py-2 table-header">Status</th>
+                  <th className="text-right px-3 py-2 table-header">Amount</th>
+                  <th className="text-left px-3 py-2 table-header">Payment</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -397,20 +409,20 @@ export default function Reports() {
                   const paymentColor = order.paymentStatus === "paid" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : order.paymentStatus === "pending" ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-gray-50 text-gray-500 border-gray-200";
                   return (
                     <tr key={order.id} className="hover:bg-gray-50/50 transition" data-testid={`report-row-${order.id}`}>
-                      <td className="px-4 py-3 text-gray-400 text-xs">{idx + 1}</td>
-                      <td className="px-4 py-3">
-                        <div className="font-medium text-gray-900">{order.customerName}</div>
-                        <div className="text-xs text-gray-400 md:hidden">{order.phone}</div>
+                      <td className="px-3 py-2 text-muted-foreground text-xs">{idx + 1}</td>
+                      <td className="px-3 py-2">
+                        <div className="font-medium text-foreground">{order.customerName}</div>
+                        <div className="text-xs text-muted-foreground md:hidden">{order.phone}</div>
                       </td>
-                      <td className="px-4 py-3 text-gray-600 hidden md:table-cell">{order.phone}</td>
-                      <td className="px-4 py-3 text-gray-500 text-xs hidden lg:table-cell max-w-[200px] truncate">{formatItemsList(items)}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-2 text-muted-foreground hidden md:table-cell">{order.phone}</td>
+                      <td className="px-3 py-2 text-muted-foreground text-xs hidden lg:table-cell max-w-[200px] truncate">{formatItemsList(items)}</td>
+                      <td className="px-3 py-2">
                         <Badge variant="outline" className={`text-[11px] capitalize ${statusColors[order.status] || ""}`}>{order.status}</Badge>
                       </td>
-                      <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                      <td className="px-3 py-2 text-right font-semibold text-foreground">
                         KES {(order.totalAmount || 0).toLocaleString()}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-2">
                         <Badge variant="outline" className={`text-[11px] capitalize ${paymentColor}`}>
                           {order.paymentStatus === "paid" && <CheckCircle2 className="h-3 w-3 mr-1" />}
                           {paymentLabel}
@@ -422,13 +434,13 @@ export default function Reports() {
               </tbody>
               <tfoot>
                 <tr className="bg-gray-50 border-t border-gray-200">
-                  <td colSpan={5} className="px-4 py-3 text-sm font-semibold text-gray-600">
+                  <td colSpan={5} className="px-3 py-2 text-sm font-semibold text-muted-foreground">
                     Total ({activeOrders.length} active orders)
                   </td>
-                  <td className="px-4 py-3 text-right text-base font-bold text-[hsl(var(--primary))]">
+                  <td className="px-3 py-2 text-right text-base font-bold text-[hsl(var(--primary))]">
                     KES {totalRevenue.toLocaleString()}
                   </td>
-                  <td className="px-4 py-3"></td>
+                  <td className="px-3 py-2"></td>
                 </tr>
               </tfoot>
             </table>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchOrdersByCustomerId, updateCustomer, deleteCustomer } from "@/lib/supabase-data";
+import { fetchOrdersByCustomerId, updateCustomer, deleteCustomer, fetchProducts } from "@/lib/supabase-data";
 import { supabase } from "@/lib/supabase";
 import { useParams, Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ArrowLeft, Phone, Calendar, Package, User, MapPin, Pencil, Trash2 } from "lucide-react";
 import { PRODUCTS, getActivePrice, type Order, type OrderItem, type Customer } from "@shared/schema";
+import type { ProductCatalogueItem } from "@shared/schema";
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -73,6 +74,14 @@ export default function CustomerDetails() {
     enabled: !!id,
   });
 
+  const { data: dbProducts } = useQuery<ProductCatalogueItem[]>({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+  const detailProducts = (dbProducts ?? []).length > 0 ? dbProducts! : [...PRODUCTS];
+
   const editMutation = useMutation({
     mutationFn: async () => {
       return updateCustomer(id!, {
@@ -118,8 +127,8 @@ export default function CustomerDetails() {
   const deliveredCount = customerOrders.filter((o) => o.status === "delivered").length;
 
   return (
-    <div className="p-6 max-w-5xl mx-auto enkana-section-green min-h-full">
-      <div className="mb-6">
+    <div className="p-4 max-w-5xl mx-auto enkana-section-green min-h-full">
+      <div className="mb-4">
         <Link href="/customers" data-testid="link-back-customers">
           <Button variant="ghost" size="sm" className="mb-3 -ml-2 text-muted-foreground hover:text-foreground hover:bg-primary/5">
             <ArrowLeft className="mr-1 h-4 w-4" />
@@ -147,7 +156,7 @@ export default function CustomerDetails() {
                 <User className="h-6 w-6" />
               </div>
               <div className="flex-1">
-                <h2 className="text-xl font-bold text-foreground" data-testid="text-customer-name">
+                <h2 className="metric-value text-xl" data-testid="text-customer-name">
                   {customer.name}
                 </h2>
                 <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground" data-testid="text-customer-phone">
@@ -239,19 +248,19 @@ export default function CustomerDetails() {
             )}
             <div className="mt-4 grid grid-cols-3 gap-3">
               <div className="rounded-lg bg-[#faf8f5] p-3 text-center">
-                <div className="text-xl font-bold text-gray-900" data-testid="text-total-orders">
+                <div className="metric-value" data-testid="text-total-orders">
                   {customerOrders.length}
                 </div>
                 <div className="text-xs text-gray-500">Total Orders</div>
               </div>
               <div className="rounded-lg bg-[#faf8f5] p-3 text-center">
-                <div className="text-xl font-bold text-green-700" data-testid="text-delivered-orders">
+                <div className="metric-value text-primary" data-testid="text-delivered-orders">
                   {deliveredCount}
                 </div>
                 <div className="text-xs text-gray-500">Delivered</div>
               </div>
               <div className="rounded-lg bg-[#faf8f5] p-3 text-center">
-                <div className="text-xl font-bold text-gray-900" data-testid="text-total-spent">
+                <div className="metric-value" data-testid="text-total-spent">
                   KES {totalSpent.toLocaleString()}
                 </div>
                 <div className="text-xs text-gray-500">Total Spent</div>
@@ -318,7 +327,7 @@ export default function CustomerDetails() {
         </DialogContent>
       </Dialog>
 
-      <h3 className="mb-3 text-sm font-semibold text-gray-700">Order History</h3>
+      <h3 className="mb-3 section-label">Order History</h3>
 
       {ordersLoading ? (
         <div className="py-12 text-center text-gray-400" data-testid="text-loading">
@@ -364,7 +373,7 @@ export default function CustomerDetails() {
 
                     <div className="mt-2 space-y-1">
                       {orderItems.map((item) => {
-                        const defaultProduct = PRODUCTS.find((p) => p.id === item.productId);
+                        const defaultProduct = detailProducts.find((p) => p.id === item.productId);
                         const isCustomPrice = defaultProduct && item.pricePerUnit !== getActivePrice(defaultProduct, null);
                         return (
                           <div

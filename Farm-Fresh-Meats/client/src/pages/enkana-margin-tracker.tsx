@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchOrders } from "@/lib/supabase-data";
+import { fetchOrders, fetchProducts } from "@/lib/supabase-data";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { PRODUCTS, type Order, type OrderItem } from "@shared/schema";
+import type { ProductCatalogueItem } from "@shared/schema";
 
 const GOAT_MUTTON_YIELD_KG = 11;
 const GOAT_MUTTON_COST_PER_ANIMAL_MIN = 6750;
@@ -59,8 +60,13 @@ function formatDeliveryMonth(m: string): string {
   return `5th ${date.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`;
 }
 
+/** From the 10th of the month, default to next delivery month (e.g. March); before 10th, current month. */
 function getDefaultMonth(): string {
   const now = new Date();
+  if (now.getDate() >= 10) {
+    const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`;
+  }
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
@@ -86,6 +92,17 @@ export default function EnkanaMarginTracker() {
     queryFn: fetchOrders,
   });
 
+  const { data: dbProducts } = useQuery<ProductCatalogueItem[]>({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+  const marginProducts = useMemo(
+    () => ((dbProducts ?? []).length > 0 ? dbProducts! : [...PRODUCTS]),
+    [dbProducts]
+  );
+
   const monthOrders = useMemo(
     () => orders.filter((o) => o.deliveryMonth === selectedMonth && o.status !== "cancelled"),
     [orders, selectedMonth]
@@ -102,7 +119,7 @@ export default function EnkanaMarginTracker() {
     });
 
     const rows: { productId: string; productName: string; unit: string; ordersQty: number; required: string; estCostMin: number; estCostMax: number }[] = [];
-    PRODUCTS.forEach((p) => {
+    marginProducts.forEach((p) => {
       const data = byProduct[p.id];
       const qty = data?.qty ?? 0;
       const rev = data?.revenue ?? 0;
@@ -131,7 +148,7 @@ export default function EnkanaMarginTracker() {
       });
     });
     return rows;
-  }, [monthOrders]);
+  }, [monthOrders, marginProducts]);
 
   const monthActuals = useMemo(
     () => animalPurchases.filter((a) => a.deliveryMonth === selectedMonth),
@@ -168,7 +185,7 @@ export default function EnkanaMarginTracker() {
     });
 
     const costPerKg = costPerKgByProduct;
-    return PRODUCTS.map((p) => {
+    return marginProducts.map((p) => {
       const d = byProduct[p.id] ?? { revenue: 0, cost: 0, qty: 0 };
       let cost = 0;
       if (p.id === "beef") cost = d.qty * BEEF_COST_PER_KG;
@@ -183,7 +200,7 @@ export default function EnkanaMarginTracker() {
         marginPct: d.revenue > 0 ? ((d.revenue - cost) / d.revenue) * 100 : 0,
       };
     });
-  }, [monthOrders, costPerKgByProduct]);
+  }, [monthOrders, costPerKgByProduct, marginProducts]);
 
   const setStatus = (productId: string, status: RequisitionStatus) => {
     const next = { ...requisitionStatuses, [productId]: status };
@@ -192,7 +209,7 @@ export default function EnkanaMarginTracker() {
   };
 
   const addAnimalPurchase = (productId: string, costKes: number, yieldKg: number) => {
-    const p = PRODUCTS.find((x) => x.id === productId);
+    const p = marginProducts.find((x) => x.id === productId);
     if (!p) return;
     const entry: AnimalPurchase = {
       id: crypto.randomUUID(),
@@ -210,8 +227,8 @@ export default function EnkanaMarginTracker() {
   const monthOptions = getMonthOptions();
 
   return (
-    <div className="p-6 max-w-5xl mx-auto min-h-full bg-background">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="p-4 max-w-5xl mx-auto min-h-full bg-background">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-display font-bold tracking-tight text-foreground">
             Margin Tracker
@@ -236,7 +253,7 @@ export default function EnkanaMarginTracker() {
       </div>
 
       <Tabs defaultValue="requisition" className="w-full">
-        <TabsList className="mb-4 grid w-full grid-cols-3 max-w-md">
+        <TabsList className="mb-3 grid w-full grid-cols-3 max-w-md">
           <TabsTrigger value="requisition" data-testid="tab-requisition">
             Requisition
           </TabsTrigger>
@@ -250,7 +267,7 @@ export default function EnkanaMarginTracker() {
 
         <TabsContent value="requisition">
           <Card className="border-0 rounded-xl bg-card shadow-sm overflow-hidden">
-            <div className="px-4 py-3 bg-muted/50 border-b border-border text-xs font-semibold uppercase tracking-wider text-muted-foreground grid grid-cols-5 gap-3">
+            <div className="px-3 py-2 bg-muted/50 border-b border-border text-xs font-semibold uppercase tracking-wider text-muted-foreground grid grid-cols-5 gap-3">
               <div>Product</div>
               <div>Orders</div>
               <div>Required</div>
@@ -267,7 +284,7 @@ export default function EnkanaMarginTracker() {
                   return (
                     <div
                       key={row.productId}
-                      className={`grid grid-cols-5 gap-3 px-4 py-3 items-center text-sm ${isGreen ? "bg-green-50 dark:bg-green-950/20" : ""}`}
+                      className={`grid grid-cols-5 gap-2 px-3 py-2 items-center text-sm ${isGreen ? "bg-green-50 dark:bg-green-950/20" : ""}`}
                     >
                       <div className="font-medium text-foreground">{row.productName}</div>
                       <div className="text-muted-foreground">{row.ordersQty} {row.unit}</div>
@@ -296,14 +313,14 @@ export default function EnkanaMarginTracker() {
                 })}
               </div>
             )}
-            <div className="px-4 py-3 border-t border-border bg-muted/30 text-sm font-semibold text-foreground">
+            <div className="px-3 py-2 border-t border-border bg-muted/30 text-sm font-semibold text-foreground">
               Total estimated sourcing: KES {totalRequisitionCost.toLocaleString()}
             </div>
           </Card>
         </TabsContent>
 
         <TabsContent value="actuals">
-          <Card className="border-0 rounded-xl bg-card shadow-sm p-4 mb-4">
+          <Card className="border-0 rounded-xl bg-card shadow-sm p-3 mb-3">
             <h3 className="text-sm font-semibold text-foreground mb-3">Log animal purchase (slaughter actuals)</h3>
             <ActualsForm
               selectedMonth={selectedMonth}
@@ -312,7 +329,7 @@ export default function EnkanaMarginTracker() {
             />
           </Card>
           <Card className="border-0 rounded-xl bg-card shadow-sm overflow-hidden">
-            <div className="px-4 py-3 bg-muted/50 border-b border-border text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="px-3 py-2 bg-muted/50 border-b border-border text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Actuals for {formatDeliveryMonth(selectedMonth)}
             </div>
             <div className="divide-y divide-border">
@@ -323,7 +340,7 @@ export default function EnkanaMarginTracker() {
                   const costPerKg = a.yieldKg > 0 ? a.costKes / a.yieldKg : 0;
                   const warn = costPerKg > COST_PER_KG_WARN_THRESHOLD;
                   return (
-                    <div key={a.id} className="px-4 py-3 flex items-center justify-between text-sm">
+                    <div key={a.id} className="px-3 py-2 flex items-center justify-between text-sm">
                       <div>
                         <span className="font-medium text-foreground">{a.productName}</span>
                         <span className="text-muted-foreground ml-2">
@@ -349,7 +366,7 @@ export default function EnkanaMarginTracker() {
 
         <TabsContent value="summary">
           <Card className="border-0 rounded-xl bg-card shadow-sm overflow-hidden">
-            <div className="px-4 py-3 bg-muted/50 border-b border-border text-xs font-semibold uppercase tracking-wider text-muted-foreground grid grid-cols-5 gap-3">
+            <div className="px-3 py-2 bg-muted/50 border-b border-border text-xs font-semibold uppercase tracking-wider text-muted-foreground grid grid-cols-5 gap-3">
               <div>Product</div>
               <div className="text-right">Revenue</div>
               <div className="text-right">Cost</div>
@@ -361,7 +378,7 @@ export default function EnkanaMarginTracker() {
                 const pct = row.marginPct;
                 const color = pct >= 40 ? "text-green-600" : pct >= 20 ? "text-amber-600" : "text-red-600";
                 return (
-                  <div key={row.productId} className="grid grid-cols-5 gap-3 px-4 py-3 items-center text-sm">
+                  <div key={row.productId} className="grid grid-cols-5 gap-2 px-3 py-2 items-center text-sm">
                     <div className="font-medium text-foreground">{row.productName}</div>
                     <div className="text-right text-muted-foreground">KES {row.revenue.toLocaleString()}</div>
                     <div className="text-right text-muted-foreground">KES {row.cost.toLocaleString()}</div>
@@ -371,7 +388,7 @@ export default function EnkanaMarginTracker() {
                 );
               })}
             </div>
-            <div className="px-4 py-3 border-t border-border bg-muted/30 flex justify-between text-sm font-semibold">
+            <div className="px-3 py-2 border-t border-border bg-muted/30 flex justify-between text-sm font-semibold">
               <span className="text-foreground">Total</span>
               <span className="text-foreground">
                 Revenue KES {summaryByProduct.reduce((s, r) => s + r.revenue, 0).toLocaleString()} — 
@@ -414,7 +431,7 @@ function ActualsForm({
   const costPerKg = costKes && yieldKg ? parseFloat(costKes) / parseFloat(yieldKg) : 0;
   const warn = costPerKg > costPerKgWarnThreshold && costPerKg > 0;
 
-  const slaughterProducts = PRODUCTS.filter((p) => p.id === "goat" || p.id === "mutton");
+  const slaughterProducts = marginProducts.filter((p) => p.id === "goat" || p.id === "mutton");
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">

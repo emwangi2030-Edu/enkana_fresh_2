@@ -53,7 +53,7 @@
           "id": "openSimpleBrowser",
           "type": "command",
           "command": "simpleBrowser.api.open",
-          "args": ["http://127.0.0.1:5001?autorefresh=15&_b=5", {"viewColumn": 2}]
+          "args": ["http://127.0.0.1:5001?autorefresh=5&_b=5", {"viewColumn": 2}]
         }
       ]
     },
@@ -78,7 +78,7 @@
     {
       "label": "Open Farm-Fresh-Meats in system browser",
       "type": "shell",
-      "command": "sleep 4 && open \"http://127.0.0.1:5001?autorefresh=15\"",
+      "command": "sleep 4 && open \"http://127.0.0.1:5001?autorefresh=5\"",
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
       "presentation": { "reveal": "never" }
@@ -103,6 +103,40 @@
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared" },
       "group": "none"
+    },
+    {
+      "label": "Build Farm-Fresh-Meats",
+      "type": "shell",
+      "command": "npm run build",
+      "options": { "cwd": "${workspaceFolder}/Farm-Fresh-Meats" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Restart Farm-Fresh-Meats (dev)",
+      "type": "shell",
+      "command": "npm run restart:dev",
+      "options": { "cwd": "${workspaceFolder}/Farm-Fresh-Meats" },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "runOptions": { "instanceLimit": 1 }
+    },
+    {
+      "label": "Build & Restart (local)",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Build Farm-Fresh-Meats", "Restart Farm-Fresh-Meats (dev)"],
+      "problemMatcher": [],
+      "group": "build",
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Build, Deploy & Restart",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Build Farm-Fresh-Meats", "Deploy to live (merge dev → main, push)", "Restart Farm-Fresh-Meats (dev)"],
+      "problemMatcher": [],
+      "group": "build",
+      "presentation": { "reveal": "always" }
     }
   ]
 }

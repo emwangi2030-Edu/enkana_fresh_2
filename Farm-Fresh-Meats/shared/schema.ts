@@ -55,7 +55,11 @@ export interface ProductCatalogueItem {
   costPrice: number | null;
   sourcingType: SourcingType;
   animalType: AnimalType;
+  available?: boolean;
+  createdAt?: string;
 }
+
+export type InsertProductCatalogueItem = Omit<ProductCatalogueItem, "createdAt"> & { createdAt?: string };
 
 export const PRODUCT_CATALOGUE: ProductCatalogueItem[] = [
   { id: "goat", name: "Goat Meat", unit: "kg", promoPrice: 750, standardPrice: 800, costPrice: null, sourcingType: "slaughter", animalType: "goat" },

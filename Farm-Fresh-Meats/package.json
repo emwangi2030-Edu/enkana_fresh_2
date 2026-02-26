@@ -9,7 +9,9 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "restart:dev": "node scripts/restart-dev.js",
+    "build:restart": "npm run build && npm run restart:dev"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
