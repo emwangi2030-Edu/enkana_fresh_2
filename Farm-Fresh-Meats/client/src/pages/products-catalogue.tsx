@@ -246,7 +246,6 @@ export default function ProductsCatalogue() {
           </div>
         </div>
       </div>
-
       {/* Active pricing — compact bar */}
       <Card className="mb-6 overflow-hidden border border-border rounded-xl bg-card shadow-sm px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -369,7 +368,6 @@ export default function ProductsCatalogue() {
             )}
           </DialogContent>
         </Dialog>
-      </div>
     </div>
   );
 }

@@ -201,17 +201,18 @@ export async function registerRoutes(
     if (!role || !["admin", "editor", "viewer"].includes(role)) {
       return res.status(400).json({ message: "Valid role (admin, editor, viewer) is required" });
     }
-    const { data: targetUser } = await supabase.auth.admin.getUserById(id);
-    if (!targetUser) {
+    const { data } = await supabase.auth.admin.getUserById(id);
+    const user = data?.user;
+    if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
     const { error } = await supabase.auth.admin.updateUserById(id, {
-      app_metadata: { ...(targetUser.app_metadata || {}), role },
+      app_metadata: { ...(user.app_metadata || {}), role },
     });
     if (error) {
       return res.status(500).json({ message: error.message });
     }
-    res.json({ id, email: targetUser.email, role });
+    res.json({ id, email: user.email, role });
   });
 
   app.get("/api/customers", requireAuth, async (_req, res) => {

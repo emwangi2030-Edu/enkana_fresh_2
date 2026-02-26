@@ -757,39 +757,22 @@ function TotpSection({
       )}
 
       {!enrollQr ? (
-        <div
-          className="inline-block cursor-pointer"
-          role="button"
-          tabIndex={0}
-          aria-disabled={enrolling}
+        <Button
+          type="button"
+          variant={hasTotp ? "outline" : "default"}
+          disabled={enrolling}
           onClick={() => {
             if (enrolling) return;
             toast.info("Starting 2FA setup…");
             startEnroll();
           }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              if (enrolling) return;
-              toast.info("Starting 2FA setup…");
-              startEnroll();
-            }
-          }}
           data-testid="button-enable-2fa"
         >
-          <Button
-            type="button"
-            variant={hasTotp ? "outline" : "default"}
-            disabled={enrolling}
-            className="pointer-events-none"
-            aria-hidden
-          >
-            {enrolling ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : null}
-            {hasTotp ? "Add another authenticator" : "Enable two-factor authentication"}
-          </Button>
-        </div>
+          {enrolling ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : null}
+          {hasTotp ? "Add another authenticator" : "Enable two-factor authentication"}
+        </Button>
       ) : (
         <div className="space-y-4 rounded-lg border border-border bg-muted/20 p-4">
           <p className="text-sm font-medium text-foreground">
