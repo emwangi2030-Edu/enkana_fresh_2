@@ -1,0 +1,8 @@
+{
+  "redirects": [
+    { "source": "/login", "destination": "https://app.enkanafresh.com/login", "permanent": true },
+    { "source": "/login/", "destination": "https://app.enkanafresh.com/login", "permanent": true },
+    { "source": "/dashboard", "destination": "https://app.enkanafresh.com/dashboard", "permanent": true },
+    { "source": "/dashboard/", "destination": "https://app.enkanafresh.com/dashboard", "permanent": true }
+  ]
+}
