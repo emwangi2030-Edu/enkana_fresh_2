@@ -285,6 +285,7 @@
     font-size: var(--text-metric);
     font-weight: var(--weight-bold);
     color: var(--color-text-heading);
+    line-height: 1.25;
   }
 
   .metric-label {

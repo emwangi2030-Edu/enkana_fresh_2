@@ -1,76 +1,90 @@
 # ENKANA FRESH — PRE-PRODUCTION SIGN-OFF REPORT
 
-**Date:** 25 February 2026  
-**Build:** Pre-production audit (Products & Pricing redesign, Settings/2FA, Admin users)
+**Date:** 26 February 2026  
+**Build:** Pre-production checklist (full audit — 2FA/Users fixes, indexes, logging)
 
 ---
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  ENKANA FRESH — PRE-PRODUCTION SIGN-OFF REPORT          │
-│  Date: 25 Feb 2026   Build: Pre-production audit         │
+│  Date: 26 Feb 2026   Build: Full audit (checklist v1.0)   │
 ├─────────────────────────────────────────────────────────┤
-│  PHASE 1 — CODE REVIEW         [ISSUES FOUND → FIXED]   │
-│  PHASE 2 — DEAD CODE           [PASS]                  │
-│  PHASE 3 — PERFORMANCE         [ISSUES FOUND]            │
-│  PHASE 4 — SECURITY            [ISSUES FOUND → FIXED]   │
+│  PHASE 1 — CODE REVIEW         [PASS]                   │
+│  PHASE 2 — DEAD CODE           [PASS]                   │
+│  PHASE 3 — PERFORMANCE         [ISSUES FOUND]          │
+│  PHASE 4 — SECURITY            [PASS]                   │
 ├─────────────────────────────────────────────────────────┤
-│  CRITICAL issues found:   1  (fixed: .env in .gitignore) │
-│  HIGH issues found:       1  (fixed: verbose callback)   │
-│  MEDIUM issues found:     4  (see list below)           │
-│  LOW issues found:        3  (see list below)           │
+│  CRITICAL issues found:   0  (must be 0 to deploy)      │
+│  HIGH issues found:       0  (must be 0 to deploy)       │
+│  MEDIUM issues found:     4  (review before deploy)     │
+│  LOW issues found:        4  (can deploy, fix later)    │
 ├─────────────────────────────────────────────────────────┤
-│  DEPLOY RECOMMENDATION:  READY                         │
+│  DEPLOY RECOMMENDATION:  READY                          │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Summary of actions taken
+## Summary of actions taken this audit
 
-### CRITICAL — Fixed
+### Fixes applied (Critical / High — none required)
 
-1. **[CRITICAL] [PHASE 4]** `.env` and `client/.env` were not in `.gitignore` — risk of committing secrets.  
-   **Fix:** Added `.env`, `.env.*`, `client/.env`, `client/.env.*` to `.gitignore` (with `!.env.example` exclusions).  
+- No new Critical or High issues; previous audit had already addressed:
+  - `.env` and `client/.env` in `.gitignore`
+  - M-Pesa callback no longer logging full request body
+
+### Fixes applied this session
+
+1. **[LOW] [PHASE 1]** Vite meta-images plugin was logging only in production.  
+   **Fix:** Changed to log only when `NODE_ENV !== "production"` so production builds do not emit console.log.  
    **Status:** Fixed.
 
-### HIGH — Fixed
+2. **[PHASE 3]** No indexes on frequently queried columns.  
+   **Fix:** Added `supabase/migrations/003_indexes_for_queries.sql` with indexes on:
+   - `orders.delivery_month`
+   - `orders.customer_id`
+   - `orders.mpesa_checkout_request_id`
+   - `customers.phone`  
+   **Status:** Migration added; run in Supabase SQL Editor when deploying.
 
-2. **[HIGH] [PHASE 4]** M-Pesa callback logged full request body (`console.log("[M-Pesa] Callback received:", JSON.stringify(req.body, null, 2))`), which could leak payment/customer data in logs.  
-   **Fix:** Removed that log line; response is still returned immediately and processing continues.  
-   **Status:** Fixed.
+---
 
-### MEDIUM — Proposed (no code change without approval)
+## Numbered findings list
 
-3. **[MEDIUM] [PHASE 1]** Implicit `any`: `(req as any).user`, `(error: any)` in server routes and some catch blocks.  
-   **Proposed fix:** Extend Express `Request` with `user?: User` and use typed `error: unknown` with type guards in catch.  
-   **Status:** Pending approval.
+[1] **[LOW] [PHASE 1]** Vite plugin `log()` was logging in production only — **Fixed** (now logs only in non-production).
 
-4. **[MEDIUM] [PHASE 1]** `reports.tsx` uses `(data: any)` and `(doc as any).lastAutoTable` for jsPDF.  
-   **Proposed fix:** Add minimal types or `// @ts-expect-error` with a comment where the library types are missing.  
-   **Status:** Pending approval.
+[2] **[MEDIUM] [PHASE 1]** Implicit `any`: `(req as any).user`, `(error: any)` in server routes and some catch blocks.  
+**Proposed fix:** Extend Express `Request` with `user?: User` and use `error: unknown` with type guards in catch.  
+**Status:** Pending approval.
 
-5. **[MEDIUM] [PHASE 3]** Supabase queries use `select("*")` everywhere.  
-   **Proposed fix:** For large tables (e.g. orders, customers), select only required columns in list views; keep `*` for single-row fetches if needed.  
-   **Status:** Pending approval.
+[3] **[MEDIUM] [PHASE 1]** `reports.tsx` uses `(data: any)` and `(doc as any).lastAutoTable` for jsPDF.  
+**Proposed fix:** Add minimal types or `// @ts-expect-error` with a short comment where library types are missing.  
+**Status:** Pending approval.
 
-6. **[MEDIUM] [PHASE 3]** No React.lazy / code-splitting for routes; entire app loads on first visit.  
-   **Proposed fix:** Use `React.lazy()` for heavy pages (e.g. Reports, Margin Tracker, Customers) and wrap with `<Suspense>`.  
-   **Status:** Pending approval.
+[4] **[MEDIUM] [PHASE 3]** Supabase list queries use `select("*")` everywhere.  
+**Proposed fix:** For large tables (orders, customers), select only required columns in list views.  
+**Status:** Pending approval.
 
-### LOW — Fixed or noted
+[5] **[MEDIUM] [PHASE 3]** No React.lazy / code-splitting for routes; full app loads on first visit.  
+**Proposed fix:** Use `React.lazy()` for heavy pages (Reports, Margin Tracker, Customers) and wrap with `<Suspense>`.  
+**Status:** Pending approval.
 
-7. **[LOW] [PHASE 1]** Magic numbers 30 and 60 for customer health status (days).  
-   **Fix:** Introduced `HEALTH_DAYS_ACTIVE = 30` and `HEALTH_DAYS_AT_RISK = 60` in `customers.tsx`.  
-   **Status:** Fixed.
+[6] **[LOW] [PHASE 1]** Server and Edge Functions contain `console.log` / `console.error` (M-Pesa, auth, build).  
+**Note:** Kept for operational debugging. Consider a logger with levels (e.g. only in non-production or when `LOG_LEVEL=debug`).  
+**Status:** No change; acceptable for server/scripts.
 
-8. **[LOW] [PHASE 1]** Server and scripts contain `console.log` / `console.error` (M-Pesa, auth, build).  
-   **Note:** Left in place for operational debugging. Consider a logger with levels (e.g. only log in non-production or when `LOG_LEVEL=debug`).  
-   **Status:** No change; acceptable for server/scripts.
+[7] **[LOW] [PHASE 4]** M-Pesa sandbox defaults in `mpesa-utils.ts` and `server/mpesa.ts` (shortCode `"174379"`, passKey `""`).  
+**Note:** Production must set `MPESA_SHORTCODE`, `MPESA_PASSKEY` (and other M-Pesa env vars) in environment.  
+**Status:** No change; document for production.
 
-9. **[LOW] [PHASE 4]** `.env` and `client/.env` currently contain real-looking values (Supabase anon key, ADMIN_PASSWORD, M-Pesa placeholders).  
-   **Note:** Ensure these files are never committed. `.gitignore` is now updated. If they were ever committed in the past, rotate all secrets and ensure they are not in history.  
-   **Status:** Mitigated by .gitignore; history not modified.
+[8] **[LOW] [PHASE 4]** M-Pesa callback does not validate Safaricom IP or shared secret.  
+**Note:** Optional hardening; not blocking.  
+**Status:** Pending approval.
+
+[9] **[LOW] [PHASE 4]** No rate limiting on STK push endpoint.  
+**Note:** Reduces risk of accidental or malicious spam; not blocking.  
+**Status:** Pending approval.
 
 ---
 
@@ -78,46 +92,49 @@
 
 ### PHASE 1 — Code review & quality
 
-- **Naming:** camelCase / PascalCase and file structure are consistent.
-- **Error handling:** Supabase calls use `if (error)` and throw or return; API routes use try/catch where appropriate.
-- **Type safety:** Some `any` in server (Express `req.user`), reports (jsPDF), and storage row mappers; margin and health formulas are correct.
-- **Logic:** Margin % = (sellPrice − costPrice) / sellPrice × 100 verified in products and margin tracker; health = days since last order (30/60) verified; PRICING_MODE and customer locked_price_mode respected in orders.
-- **Code smells:** Health day constants added; no 50+ line functions split in this pass; console.log removed only where it logged sensitive data.
+- **Consistency:** Naming (camelCase / PascalCase) and file structure are consistent. Imports ordered (external → internal → relative).
+- **Error handling:** Supabase calls use `const { data, error } = ...; if (error) throw new Error(error.message)`. API routes use try/catch where appropriate. Form submissions validated via Zod schemas.
+- **Type safety:** Some `any` in server (Express `req.user`), reports (jsPDF), storage row mappers, and Supabase Edge Function catch blocks. No new implicit `any` introduced.
+- **Logic:** Margin % = (sellPrice − costPrice) / sellPrice × 100 verified in products-catalogue and enkana-margin-tracker. Animals required = Math.ceil(totalKg / 11) with named constant `GOAT_MUTTON_YIELD_KG`. Health status uses `HEALTH_DAYS_ACTIVE` (30) and `HEALTH_DAYS_AT_RISK` (60). PRICING_MODE and customer `locked_price_mode` respected in orders.
+- **Code smells:** No functions >50 lines split in this pass. Magic numbers replaced with constants where applicable. No client-side console.log; server/script logs retained for ops. Vite plugin logging restricted to non-production.
 
 ### PHASE 2 — Dead code & redundancy
 
-- No unused imports or unused components identified in the files reviewed.
-- `SOURCING_OPTIONS` and `ADD_SOURCING_OPTIONS` are both used in products page.
-- Depcheck was run (or attempted); no unused packages removed in this session.
+- No unused imports or unused components identified in reviewed files.
+- No commented-out code blocks removed (none obviously redundant).
+- Depcheck was run; no unused npm packages removed this session (optional follow-up).
 
 ### PHASE 3 — Performance
 
-- Customers page uses pagination (`fetchCustomersPaginated`) and does not render all rows at once.
-- Products and orders lists are bounded in practice; no virtualisation added.
-- Supabase list queries use `select("*")` — noted as Medium for future optimisation.
+- Customers page uses `fetchCustomersPaginated` and does not render all rows at once.
+- Margin tracker uses named constants (e.g. `GOAT_MUTTON_YIELD_KG`, `COST_PER_KG_WARN_THRESHOLD`) and useMemo for derived data.
+- **Indexes:** Migration `003_indexes_for_queries.sql` added for `orders.delivery_month`, `orders.customer_id`, `orders.mpesa_checkout_request_id`, `customers.phone`. Run in Supabase when deploying.
+- List queries still use `select("*")` — noted as Medium for future optimisation.
 - No React.lazy yet — noted as Medium.
-- No N+1 pattern found; storage fetches by id or list with a single query.
+- No N+1 pattern found.
 
 ### PHASE 4 — Security audit
 
-- **Secrets:** No hardcoded API keys or service-role key in client. Server uses `lib/supabase.ts` with `SUPABASE_SERVICE_ROLE_KEY` from env; client uses `client/src/lib/supabase.ts` with `VITE_SUPABASE_ANON_KEY`. `.env` and `client/.env` added to `.gitignore`.
-- **RLS:** Migrations show RLS enabled on `customers`, `orders`, `payments`, `payment_exceptions`, `users`, `products`. Policies restrict to `authenticated` (and `service_role` where intended).
-- **API routes:** All data and payment endpoints (except M-Pesa callback) use `requireAuth`; callback does not require auth (Safaricom server calls it). STK push endpoint uses `requireAuth`.
-- **Input validation:** Orders and customers use Zod (`insertOrderSchema`, `insertCustomerSchema`). Phone and amount validation should be confirmed in the order/STK flow (not changed in this audit).
-- **Auth:** Dashboard uses Supabase Auth; unauthenticated users are redirected to login in layout. Session is managed by Supabase client (no raw localStorage of service-role key).
+- **Secrets:** No hardcoded API keys or service-role key in client. Server uses `process.env` for M-Pesa and Supabase; client uses `import.meta.env.VITE_SUPABASE_ANON_KEY` only. `.env` and `client/.env` in `.gitignore`; verified not tracked by git.
+- **RLS:** Migrations enable RLS on customers, orders, payments, payment_exceptions, users, products. Policies restrict to `authenticated` (and `service_role` where intended).
+- **API routes:** Data and payment endpoints use `requireAuth`; admin actions use `requireAdmin` (super_admin or admin). M-Pesa callback is unauthenticated (Safaricom server); does not log full body.
+- **Input validation:** Orders and customers validated with Zod (`insertOrderSchema`, `insertCustomerSchema`). Phone formatted via `formatPhone` (07XX / 254XX) for M-Pesa. No explicit max order amount (e.g. 500,000 KES) — optional improvement.
+- **Auth:** Dashboard protected by Supabase Auth; unauthenticated users redirected to login. Session managed by Supabase client (no raw localStorage of service-role key).
+- **Data exposure:** No sensitive fields or service-role key returned to client.
 
 ---
 
 ## Deploy recommendation
 
-**READY** — All Critical and High issues from this audit are resolved. Medium and Low items are documented for follow-up; none block deployment.
+**READY** — Zero Critical and zero High issues. All Medium and Low items are documented; none block deployment.
 
 Before first production deploy:
 
-1. Confirm `.env` and `client/.env` have never been committed (e.g. `git log -p -- .env`). If they have, rotate every secret and remove from history or use a secret scanner.
+1. Confirm `.env` and `client/.env` have never been committed (`git log -p -- .env` etc.). If they have, rotate all secrets.
 2. Set production env vars (M-Pesa production credentials, Supabase production URL/keys, strong `ADMIN_PASSWORD`) and do not commit them.
-3. Optionally add M-Pesa callback validation (Safaricom IP or shared secret) and rate limiting on STK push (documented as improvement, not blocking).
+3. Run `003_indexes_for_queries.sql` in Supabase SQL Editor for better list/dashboard performance.
+4. Optionally: M-Pesa callback validation (Safaricom IP or shared secret), rate limiting on STK push, and max order amount validation.
 
 ---
 
-*Generated by pre-production checklist — February 2026*
+*Generated by Enkana Fresh Pre-Production Checklist v1.0 — February 2026*

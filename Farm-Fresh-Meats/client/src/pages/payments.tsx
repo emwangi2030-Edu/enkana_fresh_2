@@ -30,6 +30,9 @@ import {
 } from "lucide-react";
 import type { Payment, PaymentException } from "@shared/schema";
 
+const ENKANA_FOREST = "#1a3a2a";
+const ENKANA_AMBER = "#e9a82a";
+
 export default function Payments() {
   const queryClient = useQueryClient();
 
@@ -63,48 +66,55 @@ export default function Payments() {
         <p className="page-subtitle">M-Pesa payment records and exceptions</p>
       </div>
 
-      <div className="mb-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
-        <Card className="enkana-card enkana-card-hover overflow-hidden border border-border shadow-sm ring-soft" data-testid="stat-total-received">
-          <div className="flex items-center gap-3 p-3">
-            <div className="enkana-icon-box grid h-11 w-11 shrink-0 place-items-center rounded-xl text-primary">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4 min-w-0">
+        <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition h-full" data-testid="stat-total-received">
+          <div className="flex items-center gap-3 p-3 min-h-0">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
               <DollarSign className="h-5 w-5" />
             </div>
-            <div>
-              <div className="metric-label">Total Received</div>
-              <div className="metric-value">KES {totalReceived.toLocaleString()}</div>
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <div className="metric-card-title truncate">Total Received</div>
+              <div className="metric-value break-words" title={`KES ${totalReceived.toLocaleString()}`}>KES {totalReceived.toLocaleString()}</div>
+              <div className="metric-label truncate">From M-Pesa</div>
             </div>
           </div>
         </Card>
-        <Card className="enkana-card enkana-card-hover overflow-hidden border border-border shadow-sm ring-soft" data-testid="stat-successful">
-          <div className="flex items-center gap-3 p-3">
-            <div className="enkana-icon-box grid h-11 w-11 shrink-0 place-items-center rounded-xl text-primary">
+        <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition h-full" data-testid="stat-successful">
+          <div className="flex items-center gap-3 p-3 min-h-0">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
               <TrendingUp className="h-5 w-5" />
             </div>
-            <div>
-              <div className="metric-label">Successful</div>
-              <div className="metric-value">{successfulPayments}</div>
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <div className="metric-card-title truncate">Successful</div>
+              <div className="metric-value truncate">{successfulPayments}</div>
+              <div className="metric-label truncate">Payments matched</div>
             </div>
           </div>
         </Card>
-        <Card className="enkana-card enkana-card-hover overflow-hidden border border-border shadow-sm ring-soft" data-testid="stat-total-payments">
-          <div className="flex items-center gap-3 p-3">
-            <div className="enkana-icon-box grid h-11 w-11 shrink-0 place-items-center rounded-xl text-accent">
+        <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition h-full" data-testid="stat-total-payments">
+          <div className="flex items-center gap-3 p-3 min-h-0">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
               <CreditCard className="h-5 w-5" />
             </div>
-            <div>
-              <div className="metric-label">Total Payments</div>
-              <div className="metric-value">{payments.length}</div>
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <div className="metric-card-title truncate">Total Payments</div>
+              <div className="metric-value truncate">{payments.length}</div>
+              <div className="metric-label truncate">Records</div>
             </div>
           </div>
         </Card>
-        <Card className="enkana-card enkana-card-hover overflow-hidden border border-border shadow-sm ring-soft" data-testid="stat-exceptions">
-          <div className="flex items-center gap-3 p-3">
-            <div className={`enkana-icon-box grid h-11 w-11 shrink-0 place-items-center rounded-xl ${unresolvedExceptions > 0 ? "text-destructive" : "text-muted-foreground"}`}>
+        <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition h-full" data-testid="stat-exceptions">
+          <div className="flex items-center gap-3 p-3 min-h-0">
+            <div
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white"
+              style={{ backgroundColor: unresolvedExceptions > 0 ? "#b91c1c" : ENKANA_AMBER }}
+            >
               <AlertTriangle className="h-5 w-5" />
             </div>
-            <div>
-              <div className="metric-label">Unresolved</div>
-              <div className="metric-value">{unresolvedExceptions}</div>
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <div className="metric-card-title truncate">Unresolved</div>
+              <div className="metric-value truncate">{unresolvedExceptions}</div>
+              <div className="metric-label truncate">Exceptions</div>
             </div>
           </div>
         </Card>

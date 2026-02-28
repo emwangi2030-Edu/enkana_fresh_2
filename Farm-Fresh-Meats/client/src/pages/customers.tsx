@@ -30,6 +30,10 @@ import {
 import { useState, useCallback, useMemo } from "react";
 import type { Customer, Order } from "@shared/schema";
 
+const ENKANA_FOREST = "#1a3a2a";
+const ENKANA_AMBER = "#e9a82a";
+const ENKANA_RED = "#b91c1c";
+
 const DUPLICATE_DISMISS_KEY = "enkana_dup_dismiss";
 const DISMISS_DAYS = 30;
 
@@ -343,23 +347,23 @@ export default function Customers() {
     setPage(1);
   }, []);
 
-  const metricCardBase = "overflow-hidden border-0 rounded-xl bg-card shadow-sm transition cursor-pointer h-full hover:ring-2 hover:ring-primary/20";
+  const metricCardBase = "overflow-hidden border-0 rounded-xl bg-white shadow-sm transition cursor-pointer h-full hover:ring-2 hover:ring-primary/20";
   const metricCardActive = "ring-2 ring-primary/30";
 
   return (
     <div className="p-4 max-w-5xl mx-auto min-h-full bg-background">
-      {/* ZONE 1 — Customer metrics dashboard (Orders-style cards) */}
+      {/* ZONE 1 — Customer metrics (aligned with Dashboard cards) */}
       <section className="mb-4" aria-label="Customer metrics">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 min-w-0">
           <Card className={metricCardBase}>
-              <div className="flex items-center gap-3 p-3">
-              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+            <div className="flex items-center gap-3 p-3 min-h-0">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
                 <Users className="h-5 w-5" />
               </div>
-              <div>
-                <div className="metric-label">Total Customers</div>
-                <div className="metric-value">{metrics.totalCustomers}</div>
-                <div className="text-[10px] text-muted-foreground">all time</div>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <div className="metric-card-title truncate">Total Customers</div>
+                <div className="metric-value truncate">{metrics.totalCustomers}</div>
+                <div className="metric-label truncate">all time</div>
               </div>
             </div>
           </Card>
@@ -370,14 +374,14 @@ export default function Customers() {
               setPage(1);
             }}
           >
-              <div className="flex items-center gap-3 p-3">
-              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600">
+            <div className="flex items-center gap-3 p-3 min-h-0">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
                 <Percent className="h-5 w-5" />
               </div>
-              <div>
-                <div className="metric-label">Repeat Customer %</div>
-                <div className="metric-value">{metrics.repeatPct}%</div>
-                <div className="text-[10px] text-muted-foreground">placed 2+ orders</div>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <div className="metric-card-title truncate">Repeat Customer %</div>
+                <div className="metric-value truncate">{metrics.repeatPct}%</div>
+                <div className="metric-label truncate">placed 2+ orders</div>
               </div>
             </div>
           </Card>
@@ -390,14 +394,14 @@ export default function Customers() {
               setPage(1);
             }}
           >
-              <div className="flex items-center gap-3 p-3">
-              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+            <div className="flex items-center gap-3 p-3 min-h-0">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
                 <DollarSign className="h-5 w-5" />
               </div>
-              <div>
-                <div className="metric-label">Avg Lifetime Value</div>
-                <div className="metric-value">KES {Math.round(metrics.avgLifetime).toLocaleString()}</div>
-                <div className="text-[10px] text-muted-foreground">per customer</div>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <div className="metric-card-title truncate">Avg Lifetime Value</div>
+                <div className="metric-value break-words" title={`KES ${Math.round(metrics.avgLifetime).toLocaleString()}`}>KES {Math.round(metrics.avgLifetime).toLocaleString()}</div>
+                <div className="metric-label truncate">per customer</div>
               </div>
             </div>
           </Card>
@@ -408,14 +412,14 @@ export default function Customers() {
               setPage(1);
             }}
           >
-              <div className="flex items-center gap-3 p-3">
-              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-600">
+            <div className="flex items-center gap-3 p-3 min-h-0">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_AMBER }}>
                 <AlertTriangle className="h-5 w-5" />
               </div>
-              <div>
-                <div className="metric-label">At Risk</div>
-                <div className="metric-value">{metrics.atRiskCount}</div>
-                <div className="text-[10px] text-muted-foreground">31–60 days</div>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <div className="metric-card-title truncate">At Risk</div>
+                <div className="metric-value truncate">{metrics.atRiskCount}</div>
+                <div className="metric-label truncate">31–60 days</div>
               </div>
             </div>
           </Card>
@@ -426,14 +430,14 @@ export default function Customers() {
               setPage(1);
             }}
           >
-              <div className="flex items-center gap-3 p-3">
-              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-red-50 text-red-600">
+            <div className="flex items-center gap-3 p-3 min-h-0">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_RED }}>
                 <UserX className="h-5 w-5" />
               </div>
-              <div>
-                <div className="metric-label">Lapsed</div>
-                <div className="metric-value">{metrics.lapsedCount}</div>
-                <div className="text-[10px] text-muted-foreground">60+ days</div>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <div className="metric-card-title truncate">Lapsed</div>
+                <div className="metric-value truncate">{metrics.lapsedCount}</div>
+                <div className="metric-label truncate">60+ days</div>
               </div>
             </div>
           </Card>
@@ -445,14 +449,14 @@ export default function Customers() {
               setPage(1);
             }}
           >
-              <div className="flex items-center gap-3 p-3">
-              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+            <div className="flex items-center gap-3 p-3 min-h-0">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
                 <MapPin className="h-5 w-5" />
               </div>
-              <div>
-                <div className="metric-label">Top Zone</div>
-                <div className="metric-value text-lg truncate" title={metrics.topZone}>{metrics.topZone}</div>
-                <div className="text-[10px] text-muted-foreground">by orders</div>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <div className="metric-card-title truncate">Top Zone</div>
+                <div className="metric-value truncate" title={metrics.topZone}>{metrics.topZone}</div>
+                <div className="metric-label truncate">by orders</div>
               </div>
             </div>
           </Card>

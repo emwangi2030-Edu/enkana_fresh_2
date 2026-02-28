@@ -45,6 +45,9 @@ import {
 import { PRODUCTS, getActivePrice, type Order, type InsertOrder, type OrderItem, type Customer } from "@shared/schema";
 import type { ProductCatalogueItem } from "@shared/schema";
 
+const ENKANA_FOREST = "#1a3a2a";
+const ENKANA_AMBER = "#e9a82a";
+
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
   confirmed: "bg-blue-100 text-blue-800 border-blue-200",
@@ -591,85 +594,88 @@ export default function Orders() {
 
       <section className="mb-4" aria-label="Revenue tracker">
         <h2 className="section-label mb-3">Revenue tracker</h2>
-        <p className="text-xs text-muted-foreground mb-3">Per docs/enkana-cursor-instructions.md §7 — each card links to the relevant screen.</p>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+        <p className="text-xs text-muted-foreground mb-3">Each card links to the relevant screen.</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 min-w-0">
           <Link href="/orders">
-            <Card className="overflow-hidden border-0 rounded-xl bg-card shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full" data-testid="stat-total-revenue">
-              <div className="flex items-center gap-3 p-3">
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+            <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full" data-testid="stat-total-revenue">
+              <div className="flex items-center gap-3 p-3 min-h-0">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
                   <DollarSign className="h-5 w-5" />
                 </div>
-                <div>
-                  <div className="metric-label">Total Revenue</div>
-                  <div className="metric-value">KES {totalRevenue.toLocaleString()}</div>
-                  <div className="text-[10px] text-muted-foreground">Paid orders only</div>
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <div className="metric-card-title truncate">Total Revenue</div>
+                  <div className="metric-value break-words" title={`KES ${totalRevenue.toLocaleString()}`}>KES {totalRevenue.toLocaleString()}</div>
+                  <div className="metric-label truncate">Paid orders only</div>
                 </div>
               </div>
             </Card>
           </Link>
           <Link href="/payments">
-            <Card className="overflow-hidden border-0 rounded-xl bg-card shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full" data-testid="stat-pending-kes">
-              <div className="flex items-center gap-3 p-3">
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-600">
+            <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full" data-testid="stat-pending-kes">
+              <div className="flex items-center gap-3 p-3 min-h-0">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_AMBER }}>
                   <TrendingUp className="h-5 w-5" />
                 </div>
-                <div>
-                  <div className="metric-label">Pending KES</div>
-                  <div className="metric-value">KES {pendingKes.toLocaleString()}</div>
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <div className="metric-card-title truncate">Pending KES</div>
+                  <div className="metric-value break-words" title={`KES ${pendingKes.toLocaleString()}`}>KES {pendingKes.toLocaleString()}</div>
+                  <div className="metric-label truncate">{pendingOrders.length} orders unpaid</div>
                 </div>
               </div>
             </Card>
           </Link>
           <Link href="/orders">
-            <Card className="overflow-hidden border-0 rounded-xl bg-card shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full" data-testid="stat-next-delivery">
-              <div className="flex items-center gap-3 p-3">
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600">
+            <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full" data-testid="stat-next-delivery">
+              <div className="flex items-center gap-3 p-3 min-h-0">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
                   <CalendarClock className="h-5 w-5" />
                 </div>
-                <div>
-                  <div className="metric-label">Next Delivery</div>
-                  <div className="metric-value text-lg">{nextDeliveryCount} orders</div>
-                  <div className="text-[10px] text-muted-foreground">{nextDeliveryDate}</div>
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <div className="metric-card-title truncate">Next Delivery</div>
+                  <div className="metric-value truncate">{nextDeliveryCount} orders</div>
+                  <div className="metric-label truncate">{nextDeliveryDate}</div>
                 </div>
               </div>
             </Card>
           </Link>
           <Link href="/orders">
-            <Card className="overflow-hidden border-0 rounded-xl bg-card shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full" data-testid="stat-avg-order-value">
-              <div className="flex items-center gap-3 p-3">
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+            <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full" data-testid="stat-avg-order-value">
+              <div className="flex items-center gap-3 p-3 min-h-0">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
                   <ShoppingBag className="h-5 w-5" />
                 </div>
-                <div>
-                  <div className="metric-label">Avg Order Value</div>
-                  <div className="metric-value">KES {avgOrderValue.toLocaleString()}</div>
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <div className="metric-card-title truncate">Avg Order Value</div>
+                  <div className="metric-value break-words" title={`KES ${avgOrderValue.toLocaleString()}`}>KES {avgOrderValue.toLocaleString()}</div>
+                  <div className="metric-label truncate">Per order average</div>
                 </div>
               </div>
             </Card>
           </Link>
           <Link href="/reports/enkana-margin-tracker">
-            <Card className="overflow-hidden border-0 rounded-xl bg-card shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full" data-testid="stat-gross-margin">
-              <div className="flex items-center gap-3 p-3">
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-600">
+            <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full" data-testid="stat-gross-margin">
+              <div className="flex items-center gap-3 p-3 min-h-0">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
                   <Percent className="h-5 w-5" />
                 </div>
-                <div>
-                  <div className="metric-label">Gross Margin %</div>
-                  <div className="metric-value">See Margin Tracker</div>
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <div className="metric-card-title truncate">Gross Margin %</div>
+                  <div className="metric-value truncate">See Margin Tracker</div>
+                  <div className="metric-label truncate">Last delivery cycle</div>
                 </div>
               </div>
             </Card>
           </Link>
           <Link href="/customers">
-            <Card className="overflow-hidden border-0 rounded-xl bg-card shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full" data-testid="stat-repeat-customers">
-              <div className="flex items-center gap-3 p-3">
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-600">
+            <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full" data-testid="stat-repeat-customers">
+              <div className="flex items-center gap-3 p-3 min-h-0">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
                   <Users className="h-5 w-5" />
                 </div>
-                <div>
-                  <div className="metric-label">Repeat Customers %</div>
-                  <div className="metric-value">{repeatCustomersPct}%</div>
-                  <div className="text-[10px] text-muted-foreground">{repeatCustomers} of {uniqueCustomers}</div>
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <div className="metric-card-title truncate">Repeat Customers %</div>
+                  <div className="metric-value truncate">{repeatCustomersPct}%</div>
+                  <div className="metric-label truncate">{repeatCustomers} of {uniqueCustomers}</div>
                 </div>
               </div>
             </Card>

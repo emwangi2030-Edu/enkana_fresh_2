@@ -18,6 +18,9 @@ import {
 import { PRODUCTS, type Order, type OrderItem, type Customer } from "@shared/schema";
 import type { ProductCatalogueItem } from "@shared/schema";
 
+const ENKANA_FOREST = "#1a3a2a";
+const ENKANA_AMBER = "#e9a82a";
+
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
   confirmed: "bg-blue-100 text-blue-800 border-blue-200",
@@ -285,48 +288,52 @@ export default function Reports() {
       <p className="mb-3 text-sm text-muted-foreground">
         Showing: <span className="font-medium text-foreground">{selectedMonth === "all" ? "All Months" : formatDeliveryMonth(selectedMonth)}</span>
       </p>
-      <div className="mb-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
-        <Card className="enkana-card enkana-card-hover overflow-hidden border border-border shadow-sm ring-soft" data-testid="report-stat-orders">
-              <div className="flex items-center gap-3 p-3">
-            <div className="enkana-icon-box grid h-11 w-11 shrink-0 place-items-center rounded-xl text-accent">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4 min-w-0">
+        <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition h-full" data-testid="report-stat-orders">
+          <div className="flex items-center gap-3 p-3 min-h-0">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
               <ShoppingBag className="h-5 w-5" />
             </div>
-            <div>
-              <div className="metric-label">Orders</div>
-              <div className="metric-value">{monthOrders.length}</div>
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <div className="metric-card-title truncate">Orders</div>
+              <div className="metric-value truncate">{monthOrders.length}</div>
+              <div className="metric-label truncate">{selectedMonth === "all" ? "All months" : "Selected month"}</div>
             </div>
           </div>
         </Card>
-        <Card className="enkana-card enkana-card-hover overflow-hidden border border-border shadow-sm ring-soft" data-testid="report-stat-revenue">
-              <div className="flex items-center gap-3 p-3">
-            <div className="enkana-icon-box grid h-11 w-11 shrink-0 place-items-center rounded-xl text-primary">
+        <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition h-full" data-testid="report-stat-revenue">
+          <div className="flex items-center gap-3 p-3 min-h-0">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
               <DollarSign className="h-5 w-5" />
             </div>
-            <div>
-              <div className="metric-label">Revenue</div>
-              <div className="metric-value">KES {totalRevenue.toLocaleString()}</div>
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <div className="metric-card-title truncate">Revenue</div>
+              <div className="metric-value break-words" title={`KES ${totalRevenue.toLocaleString()}`}>KES {totalRevenue.toLocaleString()}</div>
+              <div className="metric-label truncate">Total</div>
             </div>
           </div>
         </Card>
-        <Card className="enkana-card enkana-card-hover overflow-hidden border border-border shadow-sm ring-soft" data-testid="report-stat-paid">
-              <div className="flex items-center gap-3 p-3">
-            <div className="enkana-icon-box grid h-11 w-11 shrink-0 place-items-center rounded-xl text-primary">
+        <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition h-full" data-testid="report-stat-paid">
+          <div className="flex items-center gap-3 p-3 min-h-0">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
               <CheckCircle2 className="h-5 w-5" />
             </div>
-            <div>
-              <div className="metric-label">Paid</div>
-              <div className="metric-value">KES {paidAmount.toLocaleString()}</div>
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <div className="metric-card-title truncate">Paid</div>
+              <div className="metric-value break-words" title={`KES ${paidAmount.toLocaleString()}`}>KES {paidAmount.toLocaleString()}</div>
+              <div className="metric-label truncate">Received</div>
             </div>
           </div>
         </Card>
-        <Card className="enkana-card enkana-card-hover overflow-hidden border border-border shadow-sm ring-soft" data-testid="report-stat-pending">
-              <div className="flex items-center gap-3 p-3">
-            <div className="enkana-icon-box grid h-11 w-11 shrink-0 place-items-center rounded-xl text-accent">
+        <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition h-full" data-testid="report-stat-pending">
+          <div className="flex items-center gap-3 p-3 min-h-0">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_AMBER }}>
               <TrendingUp className="h-5 w-5" />
             </div>
-            <div>
-              <div className="metric-label">Pending</div>
-              <div className="metric-value">KES {pendingAmount.toLocaleString()}</div>
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <div className="metric-card-title truncate">Pending</div>
+              <div className="metric-value break-words" title={`KES ${pendingAmount.toLocaleString()}`}>KES {pendingAmount.toLocaleString()}</div>
+              <div className="metric-label truncate">Outstanding</div>
             </div>
           </div>
         </Card>

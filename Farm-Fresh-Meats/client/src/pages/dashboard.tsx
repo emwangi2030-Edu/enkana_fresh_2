@@ -296,17 +296,17 @@ export default function Dashboard() {
       )}
 
       {/* 6 metric cards — 3 columns, 2 rows */}
-      <section className="mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" aria-label="Key metrics">
+      <section className="mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 min-w-0" aria-label="Key metrics">
         <Link href="/orders">
           <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full">
-            <div className="flex items-center gap-3 p-3">
+            <div className="flex items-center gap-3 p-3 min-h-0">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
                 <DollarSign className="h-5 w-5" />
               </div>
-              <div>
-                <div className="metric-card-title">Total Revenue</div>
-                <div className="metric-value">KES {totalRevenue.toLocaleString()}</div>
-                <div className="metric-label">Paid orders</div>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <div className="metric-card-title truncate">Total Revenue</div>
+                <div className="metric-value break-words" title={`KES ${totalRevenue.toLocaleString()}`}>KES {totalRevenue.toLocaleString()}</div>
+                <div className="metric-label truncate">Paid orders</div>
               </div>
             </div>
           </Card>
@@ -314,14 +314,14 @@ export default function Dashboard() {
 
         <Link href="/orders">
           <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full">
-            <div className="flex items-center gap-3 p-3">
+            <div className="flex items-center gap-3 p-3 min-h-0">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_AMBER }}>
                 <TrendingUp className="h-5 w-5" />
               </div>
-              <div>
-                <div className="metric-card-title">Pending KES</div>
-                <div className="metric-value">KES {pendingKes.toLocaleString()}</div>
-                <div className="metric-label">{pendingOrders.length} orders unpaid</div>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <div className="metric-card-title truncate">Pending KES</div>
+                <div className="metric-value break-words" title={`KES ${pendingKes.toLocaleString()}`}>KES {pendingKes.toLocaleString()}</div>
+                <div className="metric-label truncate">{pendingOrders.length} orders unpaid</div>
               </div>
             </div>
           </Card>
@@ -329,14 +329,14 @@ export default function Dashboard() {
 
         <Link href={nextDelivery ? "/orders/dispatch" : "/orders"}>
           <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full">
-            <div className="flex items-center gap-3 p-3">
+            <div className="flex items-center gap-3 p-3 min-h-0">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
                 <Truck className="h-5 w-5" />
               </div>
-              <div>
-                <div className="metric-card-title">Next Delivery</div>
-                <div className="metric-value">{nextDelivery ? nextDelivery.count : 0} orders</div>
-                <div className="metric-label">{nextDelivery ? nextDelivery.dateLabel : "—"}</div>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <div className="metric-card-title truncate">Next Delivery</div>
+                <div className="metric-value truncate">{nextDelivery ? nextDelivery.count : 0} orders</div>
+                <div className="metric-label truncate">{nextDelivery ? nextDelivery.dateLabel : "—"}</div>
               </div>
             </div>
           </Card>
@@ -344,14 +344,14 @@ export default function Dashboard() {
 
         <Link href="/orders">
           <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full">
-            <div className="flex items-center gap-3 p-3">
+            <div className="flex items-center gap-3 p-3 min-h-0">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
                 <BarChart3 className="h-5 w-5" />
               </div>
-              <div>
-                <div className="metric-card-title">Avg Order Value</div>
-                <div className="metric-value">KES {avgOrderValue.toLocaleString()}</div>
-                <div className="metric-label">Per order average</div>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <div className="metric-card-title truncate">Avg Order Value</div>
+                <div className="metric-value break-words" title={`KES ${avgOrderValue.toLocaleString()}`}>KES {avgOrderValue.toLocaleString()}</div>
+                <div className="metric-label truncate">Per order average</div>
               </div>
             </div>
           </Card>
@@ -359,7 +359,7 @@ export default function Dashboard() {
 
         <Link href="/reports/enkana-margin-tracker">
           <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full">
-            <div className="flex items-center gap-3 p-3">
+            <div className="flex items-center gap-3 p-3 min-h-0">
               <div
                 className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white"
                 style={{
@@ -375,12 +375,12 @@ export default function Dashboard() {
               >
                 <Percent className="h-5 w-5" />
               </div>
-              <div>
-                <div className="metric-card-title">Gross Margin %</div>
-                <div className="metric-value">
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <div className="metric-card-title truncate">Gross Margin %</div>
+                <div className="metric-value truncate">
                   {lastCompletedDeliveryMargin != null ? `${lastCompletedDeliveryMargin.pct}%` : "—"}
                 </div>
-                <div className="metric-label">Last delivery cycle</div>
+                <div className="metric-label truncate">Last delivery cycle</div>
               </div>
             </div>
           </Card>
@@ -388,14 +388,14 @@ export default function Dashboard() {
 
         <Link href="/customers">
           <Card className="overflow-hidden border-0 rounded-xl bg-white shadow-sm hover:ring-2 hover:ring-primary/20 transition cursor-pointer h-full">
-            <div className="flex items-center gap-3 p-3">
+            <div className="flex items-center gap-3 p-3 min-h-0">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white" style={{ backgroundColor: ENKANA_FOREST }}>
                 <Users className="h-5 w-5" />
               </div>
-              <div>
-                <div className="metric-card-title">Repeat Customers</div>
-                <div className="metric-value">{repeatPct}%</div>
-                <div className="metric-label">Of total customers</div>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <div className="metric-card-title truncate">Repeat Customers</div>
+                <div className="metric-value truncate">{repeatPct}%</div>
+                <div className="metric-label truncate">Of total customers</div>
               </div>
             </div>
           </Card>
